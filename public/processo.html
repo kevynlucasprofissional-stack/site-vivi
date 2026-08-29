@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Visualização do processo 5990208-61.2025.8.09.0051.">
+  <title>Processo 5990208-61.2025.8.09.0051 | Visualização do PDF</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#1a1a1a}.top{background:#111827;color:#fff;padding:18px 20px}.top-inner{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.title{margin:0;font-size:18px;line-height:1.35}.sub{margin:3px 0 0;color:#d1d5db;font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{appearance:none;border:0;border-radius:8px;padding:11px 15px;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.primary{background:#b91c1c;color:#fff}.secondary{background:#fff;color:#111827}.disabled{opacity:.55;pointer-events:none}.wrap{max-width:1180px;margin:18px auto;padding:0 16px}.status{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:14px}.viewer{background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;height:calc(100vh - 155px);min-height:560px}.viewer iframe{width:100%;height:100%;border:0;display:block}.error{color:#991b1b}.progress{height:5px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:10px}.bar{height:100%;width:0;background:#b91c1c;transition:width .15s}.back{color:#d1d5db;text-decoration:none;font-size:13px}.back:hover{text-decoration:underline}@media(max-width:650px){.viewer{height:72vh;min-height:480px}.top-inner{align-items:flex-start}.actions{width:100%}.btn{flex:1}.title{font-size:16px}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div>
+        <a class="back" href="/">← Voltar ao dossiê</a>
+        <h1 class="title">Processo 5990208-61.2025.8.09.0051</h1>
+        <p class="sub">Visualização e download da cópia do PDF autorizada para publicação.</p>
+      </div>
+      <div class="actions">
+        <a id="openBtn" class="btn secondary disabled" href="#" target="_blank" rel="noopener">Abrir em nova aba ↗</a>
+        <a id="downloadBtn" class="btn primary disabled" href="#" download="processo-5990208-61.2025.8.09.0051.pdf">Baixar PDF ↓</a>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div id="status" class="status">Preparando o documento…<div class="progress"><div id="bar" class="bar"></div></div></div>
+    <div class="viewer"><iframe id="viewer" title="Visualizador do processo"></iframe></div>
+  </main>
+  <script>
+    (async function(){
+      const PARTS = 14;
+      const status = document.getElementById('status');
+      const bar = document.getElementById('bar');
+      const frame = document.getElementById('viewer');
+      const openBtn = document.getElementById('openBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      try {
+        const chunks = [];
+        for (let i=0;i<PARTS;i++) {
+          const n = String(i).padStart(2,'0');
+          const r = await fetch('/assets/processo/part' + n + '.txt?v=20260829', {cache:'force-cache'});
+          if(!r.ok) throw new Error('Falha ao carregar parte ' + n);
+          chunks.push((await r.text()).trim());
+          bar.style.width = Math.round(((i+1)/PARTS)*55) + '%';
+          status.firstChild.nodeValue = 'Carregando documento… ' + (i+1) + '/' + PARTS;
+        }
+        const b64 = chunks.join('');
+        const binary = atob(b64);
+        const gzipBytes = new Uint8Array(binary.length);
+        for (let i=0;i<binary.length;i++) gzipBytes[i] = binary.charCodeAt(i);
+        bar.style.width = '70%';
+        status.firstChild.nodeValue = 'Descompactando PDF…';
+        if (!('DecompressionStream' in window)) throw new Error('Seu navegador não oferece o recurso necessário para abrir este PDF. Use uma versão atual do Chrome, Edge, Firefox ou Safari.');
+        const ds = new DecompressionStream('gzip');
+        const decompressed = await new Response(new Blob([gzipBytes]).stream().pipeThrough(ds)).arrayBuffer();
+        bar.style.width = '95%';
+        const pdfBlob = new Blob([decompressed], {type:'application/pdf'});
+        const url = URL.createObjectURL(pdfBlob);
+        frame.src = url + '#view=FitH';
+        openBtn.href = url;
+        downloadBtn.href = url;
+        openBtn.classList.remove('disabled');
+        downloadBtn.classList.remove('disabled');
+        bar.style.width = '100%';
+        status.firstChild.nodeValue = 'Documento pronto — 149 páginas. Você pode visualizar abaixo ou baixar o PDF.';
+        setTimeout(()=>{ const p=status.querySelector('.progress'); if(p) p.style.display='none'; },600);
+        window.addEventListener('beforeunload',()=>URL.revokeObjectURL(url),{once:true});
+      } catch (err) {
+        console.error(err);
+        status.classList.add('error');
+        status.innerHTML = '<strong>Não foi possível carregar o PDF.</strong> ' + String(err.message || err) + '<br><a href="/">Voltar ao dossiê</a>';
+      }
+    })();
+  </script>
+</body>
+</html>
