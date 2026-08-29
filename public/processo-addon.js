@@ -20,11 +20,7 @@
 
     const docsDownload = document.querySelector('.docs-download');
     if (docsDownload) {
-      docsDownload.innerHTML = `
-        <p>O processo completo está disponível para download em PDF.</p>
-        <a href="${pdfUrl}" download="BuscaProcesso.pdf" class="btn btn-download" style="width:100%; max-width:400px;">Baixar processo completo (PDF) ↓</a>
-        <a href="https://projudi.tjgo.jus.br/BuscaProcesso?PaginaAtual=4" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="width:100%; max-width:400px;">Consultar no TJGO (Projudi) →</a>
-        <p style="font-size:12px; color:#64748b; margin-top:10px; margin-bottom:0;">PDF disponibilizado com autorização para publicação.</p>`;
+      docsDownload.remove();
     }
 
     document.querySelectorAll('.aviso-legal li').forEach(function (li) {
