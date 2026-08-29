@@ -1,0 +1,114 @@
+name: Simplify PDF download
+
+on:
+  push:
+    paths:
+      - '.github/workflows/simplify-pdf-download.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  simplify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply direct-download flow
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          # Restore the simple site entrypoint: no PDF viewer/loader layer.
+          Path('public/index.html').write_text('''<!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="description" content="Informações sobre a Operação Simulatio e sua repercussão jornalística em Rio Verde e Goiás.">
+            <title>Rio Verde sob Investigação | Informação Pública</title>
+          </head>
+          <body>
+            <noscript>Esta página requer JavaScript. <a href="/site-base.html">Abrir versão-base</a>.</noscript>
+            <script src="/site-patch.js?v=20260829-2"></script>
+          </body>
+          </html>
+          ''', encoding='utf-8')
+
+          p = Path('public/site-patch.js')
+          s = p.read_text(encoding='utf-8')
+
+          direct_url = 'https://drive.google.com/uc?export=download&id=1BAqkLWDPZw6LtruyNVLr_QoAUI8lV-gn'
+
+          # Replace the process highlight block while preserving the TJGO link.
+          new_process = '''  <!-- Destaque processo judicial -->
+          <div class="container" style="padding-top: 36px; padding-bottom: 0;">
+            <div class="processo-box" id="processo">
+              <span class="badge">⚠ Documento do processo</span>
+              <h2>Consulte ou baixe o processo</h2>
+              <p style="font-size:.95rem; color:#78350f; margin-bottom:4px;">
+                Consulte o andamento pelo TJGO ou baixe diretamente o PDF disponibilizado nesta página.
+              </p>
+              <div class="processo-numero">5990208-61.2025.8.09.0051</div>
+              <div class="processo-botoes">
+                <a href="https://projudi.tjgo.jus.br/BuscaProcesso?PaginaAtual=4" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                  Consultar processo no TJGO (Projudi) →
+                </a>
+                <a href="''' + direct_url + '''" class="btn btn-download" download="BuscaProcesso.pdf">
+                  Baixar processo completo (PDF) ↓
+                </a>
+              </div>
+              <p class="processo-nota">
+                Decisão judicial de 12/05/2026 — 1º Juízo das Garantias de Goiânia. PDF disponibilizado com autorização específica para publicação.
+              </p>
+            </div>
+          </div>'''
+          s = re.sub(r'\s*<!-- Destaque processo judicial -->[\s\S]*?(?=\s*<!-- Documentos do processo -->)', '\n' + new_process + '\n', s, count=1)
+
+          s = s.replace(
+              'Trechos documentais já reunidos nesta página editorial. O acesso integral aos autos depende das regras do TJGO. Toque na imagem para ampliar.',
+              'Trechos do documento reunidos nesta página. Toque na imagem para ampliar.'
+          )
+
+          new_docs = '''      <div class="docs-download">
+                <p>O PDF completo também está disponível para download direto.</p>
+                <a href="''' + direct_url + '''" class="btn btn-download" download="BuscaProcesso.pdf" style="width:100%; max-width:400px;">
+                  Baixar processo completo (PDF) ↓
+                </a>
+              </div>'''
+          s = re.sub(r'\s*<div class="docs-download">[\s\S]*?</div>', '\n' + new_docs, s, count=1)
+
+          s = s.replace(
+              '<li>O PDF integral identificado como sigiloso não é redistribuído; a consulta aos autos deve ser feita pelos canais oficiais do TJGO.</li>',
+              '<li>O PDF integral é disponibilizado nesta página com autorização específica para publicação.</li>'
+          )
+          s = s.replace(
+              'O PDF integral não é redistribuído por esta página porque o documento-fonte está identificado como sigiloso.',
+              'PDF disponibilizado com autorização específica para publicação.'
+          )
+
+          # Guard against the old viewer route surviving in generated markup.
+          s = s.replace('/processo.html', direct_url)
+          s = s.replace('Visualizar e baixar processo completo (PDF)', 'Baixar processo completo (PDF)')
+          p.write_text(s, encoding='utf-8')
+
+          # Remove the intermediate viewer and incomplete transfer artifacts.
+          for rel in [
+              'public/processo.html',
+              'public/processo-addon.js',
+              'public/site-loader.js',
+              'public/assets/processo/part13.txt',
+          ]:
+              fp = Path(rel)
+              if fp.exists():
+                  fp.unlink()
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: simplificar download direto do processo'
+          git push
