@@ -508,12 +508,15 @@
 
     .personagem-foto-wrap {
       width: 100%;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: 4 / 3;
       overflow: hidden;
       border-radius: 6px;
       margin-bottom: 12px;
       border: 3px solid #e5e7eb;
-      background: #e5e7eb;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .personagem-card.destaque .personagem-foto-wrap {
@@ -524,8 +527,8 @@
     .personagem-foto {
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      object-position: top center;
+      object-fit: contain;
+      object-position: center;
       display: block;
     }
 
@@ -602,10 +605,10 @@
     .doc-thumb-img {
       width: 100%;
       aspect-ratio: 4 / 3;
-      object-fit: cover;
-      object-position: top;
+      object-fit: contain;
+      object-position: center;
       display: block;
-      background: #e5e7eb;
+      background: #f3f4f6;
     }
 
     .doc-thumb-caption {
@@ -929,7 +932,7 @@
       <div class="docs-grid">
         <button class="doc-thumb" type="button" data-lightbox="0"
           aria-label="Ampliar: Identificação na decisão judicial">
-          <img src="https://drive.google.com/thumbnail?id=1qetfuZNPtBj86RBfyeX-jsCbbHWC6nKt&sz=w600"
+          <img src="assets/documentos/doc-lilian-identificacao.jpeg"
             alt="Trecho da decisão judicial com identificação de Lilian Garcia" class="doc-thumb-img" loading="lazy">
           <span class="doc-thumb-caption">
             Identificação na decisão
@@ -938,7 +941,7 @@
         </button>
 
         <button class="doc-thumb" type="button" data-lightbox="1" aria-label="Ampliar: Fachada do imóvel">
-          <img src="https://drive.google.com/thumbnail?id=1Tg5Xakshya5M-oHHN6bpLS9jl2TAiP8d&sz=w600"
+          <img src="assets/documentos/doc-fachada-imovel.jpeg"
             alt="Fachada do imóvel — documento do processo" class="doc-thumb-img" loading="lazy">
           <span class="doc-thumb-caption">
             Fachada do imóvel
@@ -947,7 +950,7 @@
         </button>
 
         <button class="doc-thumb" type="button" data-lightbox="2" aria-label="Ampliar: Auto de busca e apreensão">
-          <img src="https://drive.google.com/thumbnail?id=1bnfQF76BOy2GoenJGICEI0Glzaya8PZk&sz=w600"
+          <img src="assets/documentos/doc-auto-busca-apreensao.png"
             alt="Auto circunstanciado de busca e apreensão — MP-GO" class="doc-thumb-img" loading="lazy">
           <span class="doc-thumb-caption">
             Auto de busca e apreensão
@@ -956,7 +959,7 @@
         </button>
 
         <button class="doc-thumb" type="button" data-lightbox="3" aria-label="Ampliar: Vestígios apreendidos">
-          <img src="https://drive.google.com/thumbnail?id=1R4XBIMXNRo8pDJFiYLd42APDAbW9rxjO&sz=w600"
+          <img src="assets/documentos/doc-vestigios-apreendidos.png"
             alt="Relação de vestígios apreendidos — dispositivos eletrônicos" class="doc-thumb-img" loading="lazy">
           <span class="doc-thumb-caption">
             Vestígios apreendidos
@@ -965,7 +968,7 @@
         </button>
 
         <button class="doc-thumb" type="button" data-lightbox="4" aria-label="Ampliar: Pessoas presentes no local">
-          <img src="https://drive.google.com/thumbnail?id=1i9f5QkyvYSZi7vYfIijc0rWosz8QSd0A&sz=w600"
+          <img src="assets/documentos/doc-pessoas-presentes.png"
             alt="Relação de pessoas presentes no local da busca" class="doc-thumb-img" loading="lazy">
           <span class="doc-thumb-caption">
             Pessoas presentes no local
@@ -1137,7 +1140,7 @@
         <div class="esquema-topo">
           <div class="personagem-card">
             <div class="personagem-foto-wrap">
-              <img src="https://drive.google.com/thumbnail?id=12u52HCkQrWHk65Psj1DHDa1vgpDOuas7&sz=w800"
+              <img src="assets/lilian-garcia.jpg"
                 alt="Lilian Garcia Martins do Valle" class="personagem-foto" loading="lazy">
             </div>
             <div class="personagem-info">
@@ -1150,7 +1153,7 @@
 
           <div class="personagem-card">
             <div class="personagem-foto-wrap">
-              <img src="https://drive.google.com/thumbnail?id=1irbvrCFGEKsjDqDciNgbn4VRePJvZP_d&sz=w800"
+              <img src="assets/miguel-rodrigues.jpg"
                 alt="Miguel Rodrigues Ribeiro" class="personagem-foto" loading="lazy">
             </div>
             <div class="personagem-info">
@@ -1179,7 +1182,7 @@
         <div class="esquema-base">
           <div class="personagem-card destaque">
             <div class="personagem-foto-wrap">
-              <img src="https://drive.google.com/thumbnail?id=1_gVbxeGcpgDq89_IwLYC0hLnnShrEFFY&sz=w800"
+              <img src="assets/paulo-do-vale.webp"
                 alt="Paulo do Vale, ex-prefeito de Rio Verde" class="personagem-foto" loading="lazy">
             </div>
             <div class="personagem-info">
@@ -1258,18 +1261,13 @@
 
   <script>
     (function () {
-      /* Imagens hospedadas no Google Drive:
-         https://drive.google.com/drive/folders/15U1zi5yDjBfDOhnl2bc-zqj1Q217XxfL */
-      function driveFull(id) {
-        return 'https://drive.google.com/uc?export=view&id=' + id;
-      }
-
+      /* Imagens servidas localmente pelo Cloudflare Pages a partir do repositório. */
       var docs = [
-        { id: '1qetfuZNPtBj86RBfyeX-jsCbbHWC6nKt', legenda: 'Trecho da decisão judicial — identificação de Lilian Garcia Martins do Vale (processo 5990208-61.2025.8.09.0051)' },
-        { id: '1Tg5Xakshya5M-oHHN6bpLS9jl2TAiP8d', legenda: 'Fachada do imóvel — documento juntado ao processo' },
-        { id: '1bnfQF76BOy2GoenJGICEI0Glzaya8PZk', legenda: 'Auto circunstanciado de busca e apreensão — MP-GO/GAEPP, 11/08/2026' },
-        { id: '1R4XBIMXNRo8pDJFiYLd42APDAbW9rxjO', legenda: 'Relação de vestígios apreendidos — dispositivos eletrônicos' },
-        { id: '1i9f5QkyvYSZi7vYfIijc0rWosz8QSd0A', legenda: 'Relação de pessoas presentes no local da busca e apreensão' }
+        { src: 'assets/documentos/doc-lilian-identificacao.jpeg', legenda: 'Trecho da decisão judicial — identificação de Lilian Garcia Martins do Vale (processo 5990208-61.2025.8.09.0051)' },
+        { src: 'assets/documentos/doc-fachada-imovel.jpeg', legenda: 'Fachada do imóvel — documento juntado ao processo' },
+        { src: 'assets/documentos/doc-auto-busca-apreensao.png', legenda: 'Auto circunstanciado de busca e apreensão — MP-GO/GAEPP, 11/08/2026' },
+        { src: 'assets/documentos/doc-vestigios-apreendidos.png', legenda: 'Relação de vestígios apreendidos — dispositivos eletrônicos' },
+        { src: 'assets/documentos/doc-pessoas-presentes.png', legenda: 'Relação de pessoas presentes no local da busca e apreensão' }
       ];
 
       var lightbox = document.getElementById('lightbox');
@@ -1279,7 +1277,7 @@
 
       function abrir(index) {
         atual = index;
-        img.src = driveFull(docs[atual].id);
+        img.src = docs[atual].src;
         img.alt = docs[atual].legenda;
         legenda.textContent = docs[atual].legenda;
         lightbox.classList.add('ativo');
@@ -1294,7 +1292,7 @@
 
       function navegar(dir) {
         atual = (atual + dir + docs.length) % docs.length;
-        img.src = driveFull(docs[atual].id);
+        img.src = docs[atual].src;
         img.alt = docs[atual].legenda;
         legenda.textContent = docs[atual].legenda;
       }
