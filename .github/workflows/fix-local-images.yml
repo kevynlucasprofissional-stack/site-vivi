@@ -1,0 +1,141 @@
+name: Fix local images
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-local-images.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update image sources and sizing
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          p = Path('public/index.html')
+          s = p.read_text(encoding='utf-8')
+
+          replacements = {
+              'https://drive.google.com/thumbnail?id=1qetfuZNPtBj86RBfyeX-jsCbbHWC6nKt&sz=w600': 'assets/documentos/doc-lilian-identificacao.jpeg',
+              'https://drive.google.com/thumbnail?id=1Tg5Xakshya5M-oHHN6bpLS9jl2TAiP8d&sz=w600': 'assets/documentos/doc-fachada-imovel.jpeg',
+              'https://drive.google.com/thumbnail?id=1bnfQF76BOy2GoenJGICEI0Glzaya8PZk&sz=w600': 'assets/documentos/doc-auto-busca-apreensao.png',
+              'https://drive.google.com/thumbnail?id=1R4XBIMXNRo8pDJFiYLd42APDAbW9rxjO&sz=w600': 'assets/documentos/doc-vestigios-apreendidos.png',
+              'https://drive.google.com/thumbnail?id=1i9f5QkyvYSZi7vYfIijc0rWosz8QSd0A&sz=w600': 'assets/documentos/doc-pessoas-presentes.png',
+              'https://drive.google.com/thumbnail?id=12u52HCkQrWHk65Psj1DHDa1vgpDOuas7&sz=w800': 'assets/lilian-garcia.jpg',
+              'https://drive.google.com/thumbnail?id=1irbvrCFGEKsjDqDciNgbn4VRePJvZP_d&sz=w800': 'assets/miguel-rodrigues.jpg',
+              'https://drive.google.com/thumbnail?id=1_gVbxeGcpgDq89_IwLYC0hLnnShrEFFY&sz=w800': 'assets/paulo-do-vale.webp',
+          }
+          for old, new in replacements.items():
+              s = s.replace(old, new)
+
+          s = s.replace(
+          '''    .personagem-foto-wrap {
+                width: 100%;
+                aspect-ratio: 1 / 1;
+                overflow: hidden;
+                border-radius: 6px;
+                margin-bottom: 12px;
+                border: 3px solid #e5e7eb;
+                background: #e5e7eb;
+              }''',
+          '''    .personagem-foto-wrap {
+                width: 100%;
+                aspect-ratio: 4 / 3;
+                overflow: hidden;
+                border-radius: 6px;
+                margin-bottom: 12px;
+                border: 3px solid #e5e7eb;
+                background: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }''')
+
+          s = s.replace(
+          '''    .personagem-foto {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: top center;
+                display: block;
+              }''',
+          '''    .personagem-foto {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                object-position: center;
+                display: block;
+              }''')
+
+          s = s.replace(
+          '''    .doc-thumb-img {
+                width: 100%;
+                aspect-ratio: 4 / 3;
+                object-fit: cover;
+                object-position: top;
+                display: block;
+                background: #e5e7eb;
+              }''',
+          '''    .doc-thumb-img {
+                width: 100%;
+                aspect-ratio: 4 / 3;
+                object-fit: contain;
+                object-position: center;
+                display: block;
+                background: #f3f4f6;
+              }''')
+
+          old_script = '''      /* Imagens hospedadas no Google Drive:
+                 https://drive.google.com/drive/folders/15U1zi5yDjBfDOhnl2bc-zqj1Q217XxfL */
+              function driveFull(id) {
+                return 'https://drive.google.com/uc?export=view&id=' + id;
+              }
+
+              var docs = [
+                { id: '1qetfuZNPtBj86RBfyeX-jsCbbHWC6nKt', legenda: 'Trecho da decisão judicial — identificação de Lilian Garcia Martins do Vale (processo 5990208-61.2025.8.09.0051)' },
+                { id: '1Tg5Xakshya5M-oHHN6bpLS9jl2TAiP8d', legenda: 'Fachada do imóvel — documento juntado ao processo' },
+                { id: '1bnfQF76BOy2GoenJGICEI0Glzaya8PZk', legenda: 'Auto circunstanciado de busca e apreensão — MP-GO/GAEPP, 11/08/2026' },
+                { id: '1R4XBIMXNRo8pDJFiYLd42APDAbW9rxjO', legenda: 'Relação de vestígios apreendidos — dispositivos eletrônicos' },
+                { id: '1i9f5QkyvYSZi7vYfIijc0rWosz8QSd0A', legenda: 'Relação de pessoas presentes no local da busca e apreensão' }
+              ];'''
+
+          new_script = '''      /* Imagens servidas localmente pelo Cloudflare Pages a partir do repositório. */
+              var docs = [
+                { src: 'assets/documentos/doc-lilian-identificacao.jpeg', legenda: 'Trecho da decisão judicial — identificação de Lilian Garcia Martins do Vale (processo 5990208-61.2025.8.09.0051)' },
+                { src: 'assets/documentos/doc-fachada-imovel.jpeg', legenda: 'Fachada do imóvel — documento juntado ao processo' },
+                { src: 'assets/documentos/doc-auto-busca-apreensao.png', legenda: 'Auto circunstanciado de busca e apreensão — MP-GO/GAEPP, 11/08/2026' },
+                { src: 'assets/documentos/doc-vestigios-apreendidos.png', legenda: 'Relação de vestígios apreendidos — dispositivos eletrônicos' },
+                { src: 'assets/documentos/doc-pessoas-presentes.png', legenda: 'Relação de pessoas presentes no local da busca e apreensão' }
+              ];'''
+          s = s.replace(old_script, new_script)
+          s = s.replace('img.src = driveFull(docs[atual].id);', 'img.src = docs[atual].src;')
+
+          if 'drive.google.com/thumbnail' in s:
+              raise SystemExit('Ainda existem miniaturas do Google Drive no HTML')
+          if 'driveFull(' in s:
+              raise SystemExit('Ainda existe a função driveFull no HTML')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          if git diff --quiet -- public/index.html; then
+            echo 'Nenhuma alteração necessária.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/index.html
+          git commit -m 'fix: usar imagens locais e preservar enquadramento'
+          git push
