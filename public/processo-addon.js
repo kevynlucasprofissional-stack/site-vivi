@@ -1,5 +1,5 @@
 (function () {
-  const pdfUrl = 'https://drive.google.com/uc?export=download&id=1BAqkLWDPZw6LtruyNVLr_QoAUI8lV-gn';
+  const pdfUrl = '/assets/documentos/BuscaProcesso.pdf';
 
   function apply() {
     const buttons = document.querySelector('.processo-botoes');
