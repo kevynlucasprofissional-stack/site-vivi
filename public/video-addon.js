@@ -1,4 +1,17 @@
 (function () {
+  function updateSectionCopy() {
+    const section = document.querySelector('#videos');
+    if (!section) return false;
+
+    const title = section.querySelector('.section-title');
+    const lead = section.querySelector('.lead');
+
+    if (title) title.textContent = 'Cobertura jornalística';
+    if (lead) lead.textContent = 'Vídeos e matérias sobre a Operação Simulatio.';
+
+    return true;
+  }
+
   function replaceVideoCard() {
     const card = document.querySelector('#videos .video-card');
     if (!card || card.dataset.localVideoApplied === 'true') return Boolean(card);
@@ -19,17 +32,22 @@
         </video>
       </div>
       <div class="video-info">
-        <span class="video-tag">Compilado de imprensa · Operação Simulatio</span>
+        <span class="video-tag">Operação Simulatio</span>
         <h3>Cortes da Operação Simulatio</h3>
-        <p>Compilado em vídeo com trechos de coberturas jornalísticas e pronunciamentos sobre a operação.</p>
       </div>`;
     return true;
   }
 
-  if (replaceVideoCard()) return;
+  function applyVideoSection() {
+    const copyReady = updateSectionCopy();
+    const cardReady = replaceVideoCard();
+    return copyReady && cardReady;
+  }
+
+  if (applyVideoSection()) return;
 
   const observer = new MutationObserver(function () {
-    if (replaceVideoCard()) observer.disconnect();
+    if (applyVideoSection()) observer.disconnect();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
