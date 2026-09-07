@@ -1,4 +1,4 @@
-name: Generate video poster
+name: Optimize video and generate poster
 
 on:
   push:
@@ -11,21 +11,73 @@ permissions:
   contents: write
 
 jobs:
-  poster:
+  optimize:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate poster frame
+      - name: Install FFmpeg
         run: |
-          ffmpeg -y -ss 00:00:05 -i "public/assets/Cortes da operação Simulatio.mp4" -frames:v 1 -q:v 2 "public/assets/cortes-simulatio-poster.jpg"
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
-      - name: Commit poster
+      - name: Optimize video for Cloudflare Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          INPUT="public/assets/Cortes da operação Simulatio.mp4"
+          OUTPUT="public/assets/cortes-operacao-simulatio.mp4"
+          POSTER="public/assets/cortes-simulatio-poster.jpg"
+
+          DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$INPUT")"
+          read -r VBIT ABIT <<< "$(python3 - "$DURATION" <<'PY'
+import sys
+seconds = max(float(sys.argv[1]), 1.0)
+target_bytes = 23 * 1024 * 1024
+# Leave a small muxing/metadata margin inside the 23 MiB target.
+total_bps = int(target_bytes * 8 / seconds * 0.96)
+audio = 96000
+video = total_bps - audio
+if video < 120000:
+    audio = 64000
+    video = max(80000, total_bps - audio)
+print(video, audio)
+PY
+)"
+
+          echo "Duration: ${DURATION}s"
+          echo "Target video bitrate: ${VBIT} bps"
+          echo "Target audio bitrate: ${ABIT} bps"
+
+          ffmpeg -y -i "$INPUT" \
+            -vf "scale='min(1280,iw)':-2" \
+            -c:v libx264 -preset medium -b:v "$VBIT" -pass 1 \
+            -an -f mp4 /dev/null
+
+          ffmpeg -y -i "$INPUT" \
+            -vf "scale='min(1280,iw)':-2" \
+            -c:v libx264 -preset medium -b:v "$VBIT" -pass 2 \
+            -c:a aac -b:a "$ABIT" \
+            -movflags +faststart "$OUTPUT"
+
+          ffmpeg -y -ss 00:00:05 -i "$OUTPUT" -frames:v 1 -q:v 2 "$POSTER"
+
+          SIZE="$(stat -c%s "$OUTPUT")"
+          LIMIT=$((25 * 1024 * 1024))
+          echo "Optimized size: ${SIZE} bytes"
+          if [ "$SIZE" -ge "$LIMIT" ]; then
+            echo "Optimized file is still above the Cloudflare Pages 25 MiB limit."
+            exit 1
+          fi
+
+          rm -f ffmpeg2pass-0.log ffmpeg2pass-0.log.mbtree
+          git rm "$INPUT"
+
+      - name: Commit optimized media
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "public/assets/cortes-simulatio-poster.jpg"
-          git diff --cached --quiet && exit 0
-          git commit -m "chore: gerar thumbnail do vídeo"
+          git add "public/assets/cortes-operacao-simulatio.mp4" "public/assets/cortes-simulatio-poster.jpg"
+          git commit -m "feat: otimizar vídeo da Operação Simulatio para web"
           git push
