@@ -51,4 +51,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "public/assets/cortes-operacao-simulatio.mp4" "public/assets/cortes-simulatio-poster.jpg"
           git commit -m "feat: otimizar vídeo da Operação Simulatio para web"
-          git push
+          git pull --rebase origin video-repercussao-update
+          git push origin HEAD:video-repercussao-update
