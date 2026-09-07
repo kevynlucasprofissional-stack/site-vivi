@@ -7,7 +7,7 @@
     const lead = section.querySelector('.lead');
 
     if (title) title.textContent = 'Cobertura jornalística';
-    if (lead) lead.textContent = 'Vídeos e matérias sobre a Operação Simulatio.';
+    if (lead) lead.textContent = 'Compilado de vídeos e matérias sobre a Operação Simulatio.';
 
     return true;
   }
