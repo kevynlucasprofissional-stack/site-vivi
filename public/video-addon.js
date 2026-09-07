@@ -30,10 +30,6 @@
           <source src="/assets/cortes-operacao-simulatio.mp4" type="video/mp4">
           Seu navegador não suporta a reprodução deste vídeo.
         </video>
-      </div>
-      <div class="video-info">
-        <span class="video-tag">Operação Simulatio</span>
-        <h3>Cortes da Operação Simulatio</h3>
       </div>`;
     return true;
   }
