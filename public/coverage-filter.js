@@ -39,16 +39,7 @@
 
     cards.forEach(function (card) {
       const outlet = card.querySelector('strong')?.textContent.trim() || '';
-      const description = card.querySelector('strong + span');
-
-      if (outlet === 'TVG Multi') {
-        card.href = 'https://www.instagram.com/reel/Db8NSItBcmS/';
-        if (description) description.textContent = 'Vídeo da secretária de Educação de Itaberaí';
-        return;
-      }
-
       if (outlet === 'Instagram') return;
-
       card.remove();
     });
 
