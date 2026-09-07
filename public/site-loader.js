@@ -9,7 +9,8 @@
       const html = await response.text();
       const injected = html.replace(
         '</body>',
-        '<script src="/processo-addon.js?v=20260903"></' + 'script>\n</body>'
+        '<script src="/processo-addon.js?v=20260903"></' + 'script>\n' +
+        '<script src="/video-addon.js?v=20260907"></' + 'script>\n</body>'
       );
       return new Response(injected, {
         status: response.status,
