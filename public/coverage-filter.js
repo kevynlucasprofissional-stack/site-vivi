@@ -30,9 +30,41 @@
     'Portal Notícias Goiás'
   ];
 
+  function filterVideoLinks(section) {
+    const grid = section.querySelector('.video-links-grid');
+    if (!grid) return false;
+
+    const cards = Array.from(grid.querySelectorAll('.video-source-card'));
+    if (!cards.length) return false;
+
+    cards.forEach(function (card) {
+      const outlet = card.querySelector('strong')?.textContent.trim() || '';
+      const description = card.querySelector('strong + span');
+
+      if (outlet === 'TVG Multi') {
+        card.href = 'https://www.instagram.com/reel/Db8NSItBcmS/';
+        if (description) description.textContent = 'Vídeo da secretária de Educação de Itaberaí';
+        return;
+      }
+
+      if (outlet === 'Instagram') return;
+
+      card.remove();
+    });
+
+    const subtitle = grid.previousElementSibling;
+    if (subtitle && subtitle.classList.contains('media-subtitle')) {
+      subtitle.textContent = 'Vídeos publicados por outros meios';
+    }
+
+    return true;
+  }
+
   function applyFilter() {
     const section = document.querySelector('#videos');
     if (!section) return false;
+
+    const videoReady = filterVideoLinks(section);
 
     const cards = Array.from(section.querySelectorAll('.coverage-card'));
     if (!cards.length) return false;
@@ -65,14 +97,14 @@
 
     const subtitles = Array.from(section.querySelectorAll('.media-subtitle'));
     const writtenSubtitle = subtitles.find(function (el) {
-      return /cobertura escrita/i.test(el.textContent);
+      return /cobertura escrita|rio verde na operação/i.test(el.textContent);
     });
     if (writtenSubtitle) writtenSubtitle.textContent = 'Rio Verde na Operação Simulatio';
 
     const note = section.querySelector('.coverage-note');
     if (note) note.textContent = 'Seleção de matérias com relação direta a Rio Verde, à Prefeitura e aos agentes públicos citados.';
 
-    return true;
+    return videoReady;
   }
 
   if (applyFilter()) return;
