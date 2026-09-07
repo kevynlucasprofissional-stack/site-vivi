@@ -10,7 +10,7 @@
       const injected = html.replace(
         '</body>',
         '<script src="/processo-addon.js?v=20260903"></' + 'script>\n' +
-        '<script src="/video-addon.js?v=20260907b"></' + 'script>\n' +
+        '<script src="/video-addon.js?v=20260907c"></' + 'script>\n' +
         '<script src="/coverage-filter.js?v=20260907c"></' + 'script>\n</body>'
       );
       return new Response(injected, {
