@@ -29,48 +29,19 @@ jobs:
           INPUT="public/assets/Cortes da operação Simulatio.mp4"
           OUTPUT="public/assets/cortes-operacao-simulatio.mp4"
           POSTER="public/assets/cortes-simulatio-poster.jpg"
-
           DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$INPUT")"
-          read -r VBIT ABIT <<< "$(python3 - "$DURATION" <<'PY'
-import sys
-seconds = max(float(sys.argv[1]), 1.0)
-target_bytes = 23 * 1024 * 1024
-# Leave a small muxing/metadata margin inside the 23 MiB target.
-total_bps = int(target_bytes * 8 / seconds * 0.96)
-audio = 96000
-video = total_bps - audio
-if video < 120000:
-    audio = 64000
-    video = max(80000, total_bps - audio)
-print(video, audio)
-PY
-)"
-
+          BITRATES="$(python3 -c 'import sys; s=max(float(sys.argv[1]),1.0); total=int(23*1024*1024*8/s*0.96); a=96000; v=total-a; a,v=(64000,max(80000,total-64000)) if v<120000 else (a,v); print(v,a)' "$DURATION")"
+          read -r VBIT ABIT <<< "$BITRATES"
           echo "Duration: ${DURATION}s"
           echo "Target video bitrate: ${VBIT} bps"
           echo "Target audio bitrate: ${ABIT} bps"
-
-          ffmpeg -y -i "$INPUT" \
-            -vf "scale='min(1280,iw)':-2" \
-            -c:v libx264 -preset medium -b:v "$VBIT" -pass 1 \
-            -an -f mp4 /dev/null
-
-          ffmpeg -y -i "$INPUT" \
-            -vf "scale='min(1280,iw)':-2" \
-            -c:v libx264 -preset medium -b:v "$VBIT" -pass 2 \
-            -c:a aac -b:a "$ABIT" \
-            -movflags +faststart "$OUTPUT"
-
+          ffmpeg -y -i "$INPUT" -vf "scale='min(1280,iw)':-2" -c:v libx264 -preset medium -b:v "$VBIT" -pass 1 -an -f mp4 /dev/null
+          ffmpeg -y -i "$INPUT" -vf "scale='min(1280,iw)':-2" -c:v libx264 -preset medium -b:v "$VBIT" -pass 2 -c:a aac -b:a "$ABIT" -movflags +faststart "$OUTPUT"
           ffmpeg -y -ss 00:00:05 -i "$OUTPUT" -frames:v 1 -q:v 2 "$POSTER"
-
           SIZE="$(stat -c%s "$OUTPUT")"
           LIMIT=$((25 * 1024 * 1024))
           echo "Optimized size: ${SIZE} bytes"
-          if [ "$SIZE" -ge "$LIMIT" ]; then
-            echo "Optimized file is still above the Cloudflare Pages 25 MiB limit."
-            exit 1
-          fi
-
+          test "$SIZE" -lt "$LIMIT"
           rm -f ffmpeg2pass-0.log ffmpeg2pass-0.log.mbtree
           git rm "$INPUT"
 
