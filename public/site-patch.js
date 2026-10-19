@@ -125,11 +125,8 @@
   }
 
   // Recursos editoriais acrescentados sem alterar a estrutura jornalística original.
-  s = s.replace('</head>', '<link rel="stylesheet" href="/features.css"></head>');
-  s = s.replace('</header>',
-    '<div class="container" style="padding-top:22px">' +
-    '<a href="/denuncia" class="rv-btn">Faça sua denúncia! Clique aqui</a>' +
-    '</div></header>');
+  s = s.replace('</head>', '<link rel="stylesheet" href="/features.css?v=20261019b"></head>');
+  // O CTA de denúncia é posicionado fora do layout da landing, fixo na viewport.
   s = s.replace('<section id="resumo">',
     '<section class="rv-home-extra" id="noticias-editoriais"><div class="container">' +
     '<p class="section-label">Atualizações do projeto</p>' +
@@ -137,7 +134,11 @@
     '<div id="rv-news-home" class="rv-grid"><p>Carregando notícias...</p></div>' +
     '<a href="/noticias" class="rv-btn secondary" style="margin-top:20px">Ver todas as notícias →</a>' +
     '</div></section><section id="resumo">');
-  s = s.replace('</body>', '<script src="/news.js?v=20261019" defer></' + 'script></body>');
+  s = s.replace('</body>',
+    '<a href="/denuncia" class="rv-report-fab" aria-label="Faça sua denúncia! Clique aqui">' +
+    '<span aria-hidden="true" class="rv-report-fab-icon">!</span>' +
+    '<span class="rv-report-fab-label">Faça sua denúncia! <small>Clique aqui</small></span></a>' +
+    '<script src="/news.js?v=20261019" defer></' + 'script></body>');
 
   document.open();
   document.write(s);

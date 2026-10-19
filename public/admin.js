@@ -68,6 +68,7 @@
     dashboard.classList.remove("rv-hidden");
     if (!quill) {
       if (!window.Quill) { feedback(editorStatus, "Editor não carregado. Atualize a página.", true); return; }
+      window.RvVideo.register(Quill);
       quill = new Quill("#article-editor", {
         theme: "snow", placeholder: "Escreva aqui a matéria, com títulos, links e imagens...",
         modules: { toolbar: { container: "#editor-toolbar", handlers: {
@@ -88,6 +89,12 @@
         } } }
       });
       quill.on("text-change", renderPreview);
+      window.RvVideo.bind(() => quill, async file => {
+        const form = new FormData();
+        form.set("video", file);
+        const result = await req("/api/admin/videos", { method: "POST", body: form });
+        return result.url;
+      }, (message, error = false) => feedback(byId("video-upload-status"), message, error));
     }
     tab("reports");
     renderPreview();
@@ -263,7 +270,13 @@
   });
   byId("news-form").addEventListener("submit", async function (event) {
     event.preventDefault();
-    if (!quill || !quill.getText().trim()) { feedback(editorStatus, "Escreva o corpo da matéria.", true); return; }
+    if (window.RvVideo?.isBusy()) {
+      feedback(editorStatus, "Aguarde o vídeo terminar de converter e enviar antes de salvar.", true);
+      return;
+    }
+    if (!quill || (!quill.getText().trim() && !quill.getContents().ops.some(op => op.insert?.rvvideo))) {
+      feedback(editorStatus, "Insira texto ou vídeo na matéria.", true); return;
+    }
     const button = this.querySelector("button[type=submit]"); button.disabled = true;
     try {
       const data = {
