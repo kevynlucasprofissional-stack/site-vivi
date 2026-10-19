@@ -130,6 +130,16 @@ function cleanDelta(value) {
       ops.push(Object.keys(attrs).length ? { insert: ins, attributes: attrs } : { insert: ins });
     } else if (ins && typeof ins.image === "string" && /^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(ins.image)) {
       ops.push({ insert: { image: ins.image } });
+    } else if (ins && ins.rvvideo && typeof ins.rvvideo === "object") {
+      const item = ins.rvvideo;
+      if (item.provider === "youtube" && typeof item.id === "string" && /^[a-zA-Z0-9_-]{11}$/.test(item.id)) {
+        ops.push({ insert: { rvvideo: { provider: "youtube", id: item.id } } });
+      } else if (item.provider === "vimeo" && typeof item.id === "string" && /^[0-9]{1,12}$/.test(item.id)) {
+        ops.push({ insert: { rvvideo: { provider: "vimeo", id: item.id } } });
+      } else if (item.provider === "upload" && typeof item.url === "string" &&
+          /^\/media\/video\/[a-f0-9-]{36}\.webm$/.test(item.url)) {
+        ops.push({ insert: { rvvideo: { provider: "upload", url: item.url } } });
+      } else return null;
     } else return null;
   }
   return length > 0 ? JSON.stringify({ ops }) : null;
@@ -276,6 +286,50 @@ async function accountUpdate(request, env) {
     "rv_admin=" + token + "; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800");
   return response;
 }
+async function videoUpload(request, env) {
+  // Workers KV offers 25 MiB per value. Keep smaller encoded WebM media
+  // for predictable processing and the existing free-tier storage capacity.
+  const max = 15 * 1024 * 1024;
+  if (!request.headers.get("Content-Type")?.startsWith("multipart/form-data")) return fail("Arquivo de vídeo inválido.");
+  const length = Number(request.headers.get("Content-Length") || 0);
+  if (length > max + 20000) return fail("Vídeo convertido excede o limite de 15 MiB.", 413);
+  const data = await request.formData();
+  const file = data.get("video");
+  if (!(file instanceof File) || file.type !== "video/webm" || file.size < 100 || file.size > max) {
+    return fail("Envie vídeo convertido para WebM, com até 15 MiB.", 413);
+  }
+  const bytes = await file.arrayBuffer();
+  const signature = new Uint8Array(bytes.slice(0, 4));
+  if (signature.join(",") !== "26,69,223,163") return fail("Arquivo WebM inválido.");
+  const id = crypto.randomUUID() + ".webm";
+  await env.MEDIA.put("vid:" + id, bytes, { metadata: { type: "video/webm" } });
+  return json({ url: "/media/video/" + id, size: file.size }, 201, true);
+}
+async function videoResponse(request, env, path) {
+  if (!/^\/media\/video\/[a-f0-9-]{36}\.webm$/.test(path)) return fail("Vídeo não encontrado.", 404);
+  const result = await env.MEDIA.getWithMetadata("vid:" + path.split("/").pop(), { type: "arrayBuffer" });
+  if (!result.value) return fail("Vídeo não encontrado.", 404);
+  const bytes = new Uint8Array(result.value), total = bytes.byteLength;
+  const headers = { "Content-Type": "video/webm", "Accept-Ranges": "bytes",
+    "Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff" };
+  const range = request.headers.get("Range");
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match) return new Response(null, { status: 416,
+      headers: { ...headers, "Content-Range": "bytes */" + total } });
+    let first = match[1] ? Number(match[1]) : null;
+    let last = match[2] ? Number(match[2]) : null;
+    if (first === null && last === null) return fail("Intervalo inválido.", 416);
+    if (first === null) { first = Math.max(0, total - last); last = total - 1; }
+    else { last = last === null ? total - 1 : Math.min(last, total - 1); }
+    if (!Number.isInteger(first) || !Number.isInteger(last) || first >= total || last < first) {
+      return new Response(null, { status: 416, headers: { ...headers, "Content-Range": "bytes */" + total } });
+    }
+    return new Response(bytes.slice(first, last + 1), { status: 206,
+      headers: { ...headers, "Content-Range": `bytes ${first}-${last}/${total}`, "Content-Length": String(last - first + 1) } });
+  }
+  return new Response(bytes, { headers: { ...headers, "Content-Length": String(total) } });
+}
 async function adminApi(request, env, path, url) {
   const method = request.method;
   if (path === "/api/admin/login" && method === "POST") {
@@ -329,6 +383,7 @@ async function adminApi(request, env, path, url) {
     return newsWrite(env, await readJson(request), path.slice("/api/admin/news/".length));
   }
   if (path === "/api/admin/media" && method === "POST") return mediaUpload(request, env);
+  if (path === "/api/admin/videos" && method === "POST") return videoUpload(request, env);
   return fail("Rota administrativa não encontrada.", 404);
 }
 async function reportApi(request, env) {
@@ -368,7 +423,12 @@ export default {
         return await publicNews(request, env, path, url);
       }
       if (path.startsWith("/media/")) {
-        if (!env.MEDIA || !/^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(path)) return fail("Imagem não encontrada.", 404);
+        if (!env.MEDIA) return fail("Mídia não configurada.", 503);
+        if (path.startsWith("/media/video/")) {
+          if (!["GET", "HEAD"].includes(request.method)) return fail("Método não permitido.", 405);
+          return videoResponse(request, env, path);
+        }
+        if (!/^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(path)) return fail("Imagem não encontrada.", 404);
         const obj = await env.MEDIA.getWithMetadata("img:" + path.slice(7), { type: "arrayBuffer" });
         if (!obj.value) return fail("Imagem não encontrada.", 404);
         return new Response(obj.value, { headers: { "Content-Type": obj.metadata?.type || "application/octet-stream",

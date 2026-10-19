@@ -62,6 +62,28 @@
       root.appendChild(target); chunks = [];
     }
     for (const op of ops) {
+      if (op.insert && typeof op.insert === "object" && op.insert.rvvideo) {
+        if (chunks.length) appendLine({});
+        const item = op.insert.rvvideo;
+        const wrapper = el("div", "rv-video-embed");
+        if (item.provider === "upload" && /^\/media\/video\/[a-f0-9-]{36}\.webm$/.test(item.url)) {
+          const player = el("video");
+          player.controls = true; player.preload = "metadata"; player.playsInline = true;
+          player.src = item.url; wrapper.appendChild(player); root.appendChild(wrapper);
+        } else if ((item.provider === "youtube" && /^[a-zA-Z0-9_-]{11}$/.test(item.id)) ||
+                   (item.provider === "vimeo" && /^[0-9]{1,12}$/.test(item.id))) {
+          const frame = el("iframe");
+          frame.src = item.provider === "youtube"
+            ? "https://www.youtube-nocookie.com/embed/" + item.id
+            : "https://player.vimeo.com/video/" + item.id;
+          frame.title = "Vídeo da matéria"; frame.loading = "lazy";
+          frame.allowFullscreen = true;
+          frame.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+          frame.referrerPolicy = "strict-origin-when-cross-origin";
+          wrapper.appendChild(frame); root.appendChild(wrapper);
+        }
+        continue;
+      }
       if (op.insert && typeof op.insert === "object" && typeof op.insert.image === "string") {
         if (chunks.length) appendLine({});
         if (!/^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(op.insert.image)) continue;

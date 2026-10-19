@@ -162,3 +162,59 @@ test("admin: altera usuário/e-mail/senha, exige senha atual e revoga sessões a
     assert.equal((await login("novo.editor", newPass)).status, 200);
   } finally { globalThis.fetch = realFetch; }
 });
+
+
+test("vídeos: exige sessão, valida WebM, reproduz com Range e publica embeds seguros", async () => {
+  const env = envForTest();
+  globalThis.fetch = async url => String(url).includes("challenges.cloudflare.com")
+    ? new Response(JSON.stringify({ success: true, hostname: "rioverdemerecesaber.com" }))
+    : realFetch(url);
+  try {
+    const login = await worker.fetch(request("/api/admin/login", "POST", {
+      username: "admin", password: "senha-forte-de-teste", turnstileToken: "test"
+    }), env);
+    assert.equal(login.status, 200);
+    const cookie = login.headers.get("Set-Cookie").split(";")[0];
+    const bytes = new Uint8Array(300);
+    bytes.set([26, 69, 223, 163], 0); // assinatura EBML válida
+    const form = new FormData();
+    form.append("video", new File([bytes], "video.webm", { type: "video/webm" }));
+    const submit = path => new Request(origin + path, {
+      method: "POST", headers: { Origin: origin, Cookie: cookie }, body: form
+    });
+    const denied = await worker.fetch(new Request(origin + "/api/admin/videos"), env);
+    assert.equal(denied.status, 401);
+    const upload = await worker.fetch(submit("/api/admin/videos"), env);
+    assert.equal(upload.status, 201, await upload.clone().text());
+    const video = await upload.json();
+    assert.match(video.url, /^\/media\/video\/[a-f0-9-]{36}\.webm$/);
+    const streamed = await worker.fetch(request(video.url), env);
+    assert.equal(streamed.status, 200);
+    assert.equal(streamed.headers.get("Content-Type"), "video/webm");
+    const ranged = await worker.fetch(new Request(origin + video.url, {
+      headers: { Range: "bytes=0-3" }
+    }), env);
+    assert.equal(ranged.status, 206);
+    assert.deepEqual([...new Uint8Array(await ranged.arrayBuffer())], [26, 69, 223, 163]);
+    const delta = { ops: [
+      { insert: "Vídeos de teste\n" },
+      { insert: { rvvideo: { provider: "youtube", id: "DYK_Ft74V9g" } } },
+      { insert: { rvvideo: { provider: "upload", url: video.url } } }
+    ] };
+    const article = await worker.fetch(request("/api/admin/news", "POST", {
+      title: "Matéria com vídeo", summary: "Resumo",
+      published: true, body: delta
+    }, cookie), env);
+    assert.equal(article.status, 201, await article.clone().text());
+    const detail = await worker.fetch(request("/api/news/materia-com-video"), env);
+    assert.equal(detail.status, 200);
+    assert.deepEqual((await detail.json()).body.ops, delta.ops);
+    const unsafe = await worker.fetch(request("/api/admin/news", "POST", {
+      title: "Vídeo inseguro", summary: "Resumo", published: true,
+      body: { ops: [{ insert: { rvvideo: {
+        provider: "upload", url: "https://attacker.example/evil.mp4"
+      } } }] }
+    }, cookie), env);
+    assert.equal(unsafe.status, 400);
+  } finally { globalThis.fetch = realFetch; }
+});

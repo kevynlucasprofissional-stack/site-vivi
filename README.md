@@ -6,12 +6,14 @@ para publicar este repositório.
 
 ## Funcionalidades
 
-- Home: botão **Faça sua denúncia! Clique aqui**, feed das cinco notícias mais recentes e link para ver todas.
+- Home: botão **Faça sua denúncia! Clique aqui** flutuante, animado suavemente e responsivo (respeita `prefers-reduced-motion`); feed das cinco notícias mais recentes e link para ver todas.
 - /denuncia: formulário com nome, email, telefone, relato, consentimento e confirmação por protocolo.
 - /noticias e /noticias/slug-da-materia: feed paginado e artigos completos.
 - /admin: login administrativo, painel de denúncias, download CSV/JSON, edição e publicação de matérias, prévias desktop/mobile.
 - Aba **Conta e segurança**: trocar nome de usuário, cadastrar e-mail de login e alterar senha pelo próprio painel, mediante senha atual. Sessões anteriores são revogadas; a sessão que confirma a mudança recebe novo cookie. O e-mail ainda não permite redefinição de senha.
 - Editor Quill 2.0.3 vendorizado em public/vendor; imagens JPG/PNG/WebP de até 3 MB armazenadas em KV.
+- Vídeos no corpo: incorporar vídeos HTTPS de YouTube/Vimeo ou selecionar um arquivo que o Chrome/Edge consiga decodificar (testados MP4, MOV/H.264 e WebM), converter no próprio navegador para WebM VP8/Opus e então enviar ao KV. Máximo: vídeo de origem até 500 MiB e 3 minutos, vídeo convertido até 15 MiB. **Não promete aceitar todos os formatos**: AVI/MPEG-4, codecs incomuns, arquivos corrompidos e conteúdo protegido podem não ser decodificados. Para esses casos, publicar via YouTube/Vimeo e incorporar por link.
+- Vídeos em KV oferecem reprodução HTTP com suporte a Range e sem serviço de transcodificação pago.
 - Backend em Cloudflare Workers, registros estruturados em D1.
 
 ## Configuração Cloudflare

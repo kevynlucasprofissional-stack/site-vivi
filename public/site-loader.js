@@ -24,7 +24,7 @@
   };
 
   const script = document.createElement('script');
-  script.src = '/site-patch.js?v=20261019';
+  script.src = '/site-patch.js?v=20261019b';
   script.onerror = function () {
     document.body.innerHTML = '<main style="max-width:720px;margin:60px auto;padding:20px;font:16px system-ui"><h1>Não foi possível carregar a página.</h1><p>Tente atualizar.</p></main>';
   };

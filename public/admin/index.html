@@ -24,6 +24,14 @@
 <label>Imagem de capa <input id="news-cover" type="file" accept="image/jpeg,image/png,image/webp"></label>
 <div id="news-cover-status" class="rv-help" role="status"></div>
 <div><label>Corpo da matéria (editor visual)</label><div id="editor-toolbar"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2"></option><option value="3"></option></select></span><span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button><button type="button" class="ql-link"></button></span><span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button><button type="button" class="ql-blockquote"></button><button type="button" class="ql-image"></button></span></div><div id="article-editor" class="rv-editor"></div></div>
+<div class="rv-panel" style="padding:14px;background:#f8f7f4">
+<h3>Vídeos no corpo da notícia</h3>
+<label>Link de YouTube ou Vimeo<input id="video-link" type="url" placeholder="https://youtube.com/watch?v=..."></label>
+<button type="button" class="rv-btn secondary" id="insert-video-link">Inserir pelo link</button>
+<label>Ou enviar um vídeo<input id="video-file" type="file" accept="video/*"></label>
+<p class="rv-help">Chrome/Edge convertem arquivos que conseguem decodificar (MP4, MOV/H.264, WebM). AVI e codecs incomuns podem não funcionar. Máximo de 3 minutos e 15 MiB após conversão.</p>
+<button type="button" class="rv-btn secondary" id="insert-video-file">Converter, enviar e inserir</button>
+<div id="video-upload-status" role="status"></div></div>
 <label class="rv-check"><input type="checkbox" id="news-published"> <span>Publicar notícia imediatamente</span></label>
 <div id="editor-status" role="status" aria-live="polite"></div>
 <div class="rv-actions"><button class="rv-btn" type="submit">Salvar notícia</button><button class="rv-btn secondary" id="new-article" type="button">Limpar / nova notícia</button></div>
@@ -45,4 +53,4 @@
 </form></section>
 </section></main>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-<script src="/vendor/quill.js" defer></script><script src="/admin.js" defer></script></body></html>
+<script src="/vendor/quill.js" defer></script><script src="/editor-video.js" defer></script><script src="/admin.js" defer></script></body></html>

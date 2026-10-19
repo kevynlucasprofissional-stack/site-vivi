@@ -58,3 +58,55 @@
 .rv-check input{margin-top:6px}
 @media(max-width:800px){.rv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rv-preview,.rv-admin-grid{grid-template-columns:1fr}.rv-preview-phone{max-width:250px}}
 @media(max-width:560px){.rv-grid{grid-template-columns:1fr}.rv-shell{padding:20px 14px}.rv-panel{padding:18px}.rv-top{align-items:flex-start;flex-direction:column}}
+
+/* Chamada fixa de denúncia: visível, sem interferir na largura do conteúdo. */
+.rv-report-fab{
+  position:fixed;z-index:9999;right:clamp(14px,3vw,36px);
+  bottom:calc(22px + env(safe-area-inset-bottom, 0px));
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  max-width:calc(100vw - 28px);min-height:64px;padding:12px 22px 12px 14px;
+  border:2px solid rgba(255,255,255,.9);border-radius:999px;
+  background:#b91c1c;color:white!important;text-decoration:none!important;
+  box-shadow:0 12px 36px rgba(85,12,12,.34),0 3px 12px rgba(0,0,0,.16);
+  font:800 16px/1.15 system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:0;isolation:isolate;
+  animation:rv-report-breathe 3.6s ease-in-out infinite;
+}
+.rv-report-fab-icon{
+  flex:0 0 32px;width:32px;height:32px;
+  display:grid;place-items:center;border-radius:50%;
+  background:#fff;color:#a81111;font-size:22px;font-weight:900;line-height:1;
+}
+.rv-report-fab-label{display:block;white-space:nowrap;}
+.rv-report-fab-label small{display:block;text-align:left;font-size:12px;font-weight:600;opacity:.94;margin-top:3px}
+.rv-report-fab:hover{background:#981b1b;animation-play-state:paused;transform:translateY(-2px);box-shadow:0 16px 38px rgba(85,12,12,.38)}
+.rv-report-fab:focus-visible{outline:3px solid #facc15;outline-offset:3px;animation-play-state:paused}
+@keyframes rv-report-breathe{
+  0%,100%{transform:scale(1);box-shadow:0 12px 36px rgba(85,12,12,.30),0 3px 12px rgba(0,0,0,.16)}
+  50%{transform:scale(1.035);box-shadow:0 14px 40px rgba(138,20,20,.4),0 3px 12px rgba(0,0,0,.16)}
+}
+@media(max-width:600px){
+  body:has(.rv-report-fab){padding-bottom:80px}
+  .rv-report-fab{
+    right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    min-height:52px;padding:9px 14px 9px 9px;gap:8px;
+    font-size:13px;border-width:1px;
+    box-shadow:0 8px 22px rgba(0,0,0,.26);
+  }
+  .rv-report-fab-icon{flex-basis:26px;width:26px;height:26px;font-size:18px}
+  .rv-report-fab-label small{font-size:10px;margin-top:2px}
+}
+@media(max-width:350px){
+  .rv-report-fab{font-size:12px;min-height:48px;padding-right:11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .rv-report-fab{animation:none}
+  .rv-report-fab:hover{transform:none}
+}
+@media print{.rv-report-fab{display:none!important}}
+
+/* Vídeos nas matérias e no editor: proporção estável em celular e desktop. */
+.rv-video-embed{position:relative;display:block;aspect-ratio:16/9;width:100%;max-width:100%;
+  overflow:hidden;border-radius:10px;background:#111;margin:18px 0}
+.rv-video-embed video,.rv-video-embed iframe{display:block;width:100%;height:100%;border:0;object-fit:contain}
+.rv-editor .rv-video-embed{max-width:700px}
