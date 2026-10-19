@@ -89,6 +89,12 @@
         if (!/^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(op.insert.image)) continue;
         const img = el("img");
         img.src = op.insert.image; img.alt = "Imagem da matéria"; img.loading = "lazy";
+        const width = op.attributes?.width;
+        const align = op.attributes?.imgAlign;
+        if (["25%", "50%", "75%", "100%"].includes(width)) img.style.width = width;
+        if (["left", "center", "right"].includes(align)) {
+          img.classList.add("rv-img-" + align);
+        }
         root.appendChild(img); continue;
       }
       if (typeof op.insert !== "string") continue;

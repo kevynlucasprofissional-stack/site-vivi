@@ -251,3 +251,36 @@ test("denúncias anônimas: texto único, sem cadastro nem dados de contato pers
   assert.ok(!js.includes("turnstile"));
   assert.ok(!page.includes('name="email"'));
 });
+
+
+test("imagens do editor: tamanho e alinhamento persistem e CSS arbitrário é descartado", async () => {
+  const env = envForTest();
+  const login = await worker.fetch(request("/api/admin/login", "POST", {
+    username: "admin", password: "senha-forte-de-teste"
+  }), env);
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get("Set-Cookie").split(";")[0];
+  const img = "/media/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp";
+  const payload = {
+    title: "Teste de imagem editorial", summary: "Prévia de imagem",
+    published: true,
+    body: { ops: [
+      { insert: "Foto da matéria\n" },
+      { insert: { image: img }, attributes: {
+        width: "50%", imgAlign: "right", color: "red", style: "position:fixed",
+        alt: "<img onerror=alert(1)>"
+      }},
+      { insert: "\n" }
+    ]}
+  };
+  const created = await worker.fetch(request("/api/admin/news", "POST", payload, cookie), env);
+  assert.equal(created.status, 201, await created.clone().text());
+  const article = await worker.fetch(request("/api/news/teste-de-imagem-editorial"), env);
+  assert.equal(article.status, 200);
+  const data = await article.json();
+  const saved = data.body.ops.find(op => op.insert?.image);
+  assert.deepEqual(saved, {
+    insert: { image: img },
+    attributes: { width: "50%", imgAlign: "right" }
+  });
+});

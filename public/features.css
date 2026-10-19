@@ -110,3 +110,46 @@
   overflow:hidden;border-radius:10px;background:#111;margin:18px 0}
 .rv-video-embed video,.rv-video-embed iframe{display:block;width:100%;height:100%;border:0;object-fit:contain}
 .rv-editor .rv-video-embed{max-width:700px}
+
+/* Edição de imagens no estilo do ClassicPress, aplicada ao Quill existente. */
+.rv-image-tools {
+  position:relative;z-index:1;
+  padding:12px;border:1px solid #d0d0d0;border-radius:10px;
+  background:#fff;box-shadow:0 5px 18px #00000020;
+  display:grid;gap:9px;margin-top:8px;
+}
+.rv-image-tools strong{font-size:12px;color:#444}
+.rv-image-tools-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.rv-image-tools-row span{min-width:78px;font-size:12px;font-weight:700;color:#444}
+.rv-image-tools-row button{
+  border:1px solid #bbb;background:white;color:#222;
+  border-radius:7px;padding:7px 10px;min-height:36px;
+  font:600 12px/1.2 system-ui;cursor:pointer;
+}
+.rv-image-tools-row button:hover,.rv-image-tools-row button:focus-visible{border-color:#b91c1c;outline-color:#b91c1c}
+.rv-image-tools-row button[aria-pressed="true"]{background:#b91c1c;border-color:#b91c1c;color:white}
+#rv-image-remove{margin-left:auto;color:#9f1239}
+.rv-editor img{max-width:100%;height:auto;cursor:pointer;border-radius:6px}
+.rv-editor img.rv-image-selected{outline:3px solid #b91c1c;outline-offset:3px}
+.rv-editor img[data-img-align="left"]{display:block;margin:12px auto 12px 0}
+.rv-editor img[data-img-align="center"]{display:block;margin:12px auto}
+.rv-editor img[data-img-align="right"]{display:block;margin:12px 0 12px auto}
+.rv-article img.rv-img-left{margin:16px auto 16px 0}
+.rv-article img.rv-img-center{margin:16px auto}
+.rv-article img.rv-img-right{margin:16px 0 16px auto}
+@media(max-width:480px){
+  .rv-image-tools{position:static}
+  .rv-image-tools-row span{flex:0 0 100%}
+  .rv-image-tools-row button{flex:1;padding:8px 5px}
+}
+
+/* Quill usa height:100% por padrão, o que sobrepunha as ferramentas e o formulário seguinte. */
+.rv-editor.ql-container{height:auto!important;min-height:260px}
+.rv-editor .ql-editor{min-height:255px}
+
+/* Área de escrita maior, aproximando o painel do fluxo editorial do ClassicPress. */
+@media(min-width:850px){
+  .rv-admin-grid{grid-template-columns:minmax(0,1fr) 300px}
+  #news-panel .rv-preview{grid-template-columns:1fr}
+  #news-panel .rv-preview-phone{max-width:240px}
+}
