@@ -284,3 +284,58 @@ test("imagens do editor: tamanho e alinhamento persistem e CSS arbitrário é de
     attributes: { width: "50%", imgAlign: "right" }
   });
 });
+
+
+test("gestão editorial: rascunho privado, publicação, prévia autenticada e exclusão", async () => {
+  const env = envForTest();
+  const signed = await worker.fetch(request("/api/admin/login", "POST", {
+    username: "admin", password: "senha-forte-de-teste"
+  }), env);
+  assert.equal(signed.status, 200);
+  const cookie = signed.headers.get("Set-Cookie").split(";")[0];
+
+  const draft = await worker.fetch(request("/api/admin/news", "POST", {
+    title: "Notícia de teste editorial", summary: "Resumo de teste", published: false,
+    body: { ops: [{ insert: "Corpo completo de prévia ainda em rascunho.\n" }] }
+  }, cookie), env);
+  assert.equal(draft.status, 201);
+  const { id, slug } = await draft.json();
+  const privatePath = "/api/admin/news/" + id;
+  const publicPath = "/api/news/" + slug;
+
+  assert.equal((await worker.fetch(request(privatePath), env)).status, 401);
+  const before = await worker.fetch(request(privatePath, "GET", undefined, cookie), env);
+  assert.equal(before.status, 200);
+  assert.equal((await before.json()).published, false);
+  assert.equal((await worker.fetch(request(publicPath), env)).status, 404);
+
+  const anonymousPreview = await worker.fetch(request("/admin/preview/?id=" + id), {
+    ...env, ASSETS: { fetch: async r => new Response(new URL(r.url).pathname) }
+  });
+  assert.equal(anonymousPreview.status, 200);
+  assert.equal(await anonymousPreview.text(), "/admin/preview/");
+
+  const denyPublish = await worker.fetch(request(privatePath + "/publish", "POST"), env);
+  assert.equal(denyPublish.status, 401);
+  const published = await worker.fetch(request(privatePath + "/publish", "POST", undefined, cookie), env);
+  assert.equal(published.status, 200);
+  const publicResult = await worker.fetch(request(publicPath), env);
+  assert.equal(publicResult.status, 200);
+  assert.equal((await publicResult.json()).title, "Notícia de teste editorial");
+  assert.equal((await worker.fetch(request(privatePath + "/publish", "POST", undefined, cookie), env)).status, 409);
+
+  const edited = await worker.fetch(request(privatePath, "PUT", {
+    title: "Notícia revisada", summary: "Resumo atualizado", published: true,
+    body: { ops: [{ insert: "Matéria publicada e atualizada.\n" }] }
+  }, cookie), env);
+  assert.equal(edited.status, 200);
+  const saved = await worker.fetch(request(privatePath, "GET", undefined, cookie), env);
+  const detail = await saved.json();
+  assert.equal(detail.title, "Notícia revisada");
+  assert.equal(detail.published, true);
+
+  assert.equal((await worker.fetch(request(privatePath, "DELETE"), env)).status, 401);
+  assert.equal((await worker.fetch(request(privatePath, "DELETE", undefined, cookie), env)).status, 200);
+  assert.equal((await worker.fetch(request(privatePath, "GET", undefined, cookie), env)).status, 404);
+  assert.equal((await worker.fetch(request("/api/news/noticia-revisada"), env)).status, 404);
+});

@@ -49,6 +49,16 @@ O editor permanece no Quill 2 para evitar migrar dados já publicados. O fluxo v
 
 A implementação reutiliza Quill, D1 e KV existentes; não inclui o runtime PHP, nem o TinyMCE legado do ClassicPress. Testes: `scripts/integration.test.mjs` e testes reais locais no Chrome com Playwright.
 
+## Gestão editorial (rascunhos, publicação e prévia)
+
+- A lista **Notícias salvas** diferencia **Rascunho** de **Publicada**.
+- Rascunhos: **Editar**, **Postar**, **Ver preview** e **Excluir**.
+- Publicadas: **Editar**, **Ver preview** e **Excluir**. Ao editar uma notícia já publicada, o botão principal muda para **Atualizar** e mantém a publicação ativa.
+- **Postar** publica uma matéria já salva sem precisar reabrir o editor.
+- **Ver preview** abre `/admin/preview/?id=<UUID>`, com o mesmo renderizador da página pública `/noticias/:slug`, inclusive título, capa, imagens, vídeos e corpo. A API privada `GET /api/admin/news/:id` exige sessão administrativa; rascunhos nunca entram no feed público.
+- **Excluir** remove a notícia do D1 depois de confirmação, fazendo a página pública retornar 404. Arquivos de mídia compartilháveis continuam no KV para não apagar imagens usadas em outras notícias (limpeza de arquivos órfãos fora do escopo 80/20).
+- Somente **um preview de card** no editor, responsivo.
+
 ## Desenvolvimento e testes
 
 - npm install

@@ -388,8 +388,34 @@ async function adminApi(request, env, path, url) {
       createdAt: r.created_at, updatedAt: r.updated_at })) }, 200, true);
   }
   if (path === "/api/admin/news" && method === "POST") return newsWrite(env, await readJson(request));
-  if (/^\/api\/admin\/news\/[a-f0-9-]{36}$/.test(path) && method === "PUT") {
-    return newsWrite(env, await readJson(request), path.slice("/api/admin/news/".length));
+  const publication = /^\/api\/admin\/news\/([a-f0-9-]{36})\/publish$/.exec(path);
+  if (publication && method === "POST") {
+    const existing = await env.DB.prepare("SELECT published FROM articles WHERE id=?").bind(publication[1]).first();
+    if (!existing) return fail("Notícia não encontrada.", 404);
+    if (existing.published) return fail("Notícia já publicada.", 409);
+    const time = now();
+    await env.DB.prepare(
+      "UPDATE articles SET published=1,published_at=?,updated_at=? WHERE id=? AND published=0"
+    ).bind(time, time, publication[1]).run();
+    return json({ ok: true, id: publication[1], published: true }, 200, true);
+  }
+  const article = /^\/api\/admin\/news\/([a-f0-9-]{36})$/.exec(path);
+  if (article && method === "GET") {
+    const found = await env.DB.prepare("SELECT * FROM articles WHERE id=?").bind(article[1]).first();
+    if (!found) return fail("Notícia não encontrada.", 404);
+    return json({
+      ...publicArticle(found, true), published: !!found.published,
+      createdAt: found.created_at, updatedAt: found.updated_at
+    }, 200, true);
+  }
+  if (article && method === "DELETE") {
+    const removed = await env.DB.prepare("DELETE FROM articles WHERE id=?").bind(article[1]).run();
+    if ((removed?.meta?.changes ?? removed?.changes ?? 0) !== 1)
+      return fail("Notícia não encontrada.", 404);
+    return json({ ok: true, id: article[1] }, 200, true);
+  }
+  if (article && method === "PUT") {
+    return newsWrite(env, await readJson(request), article[1]);
   }
   if (path === "/api/admin/media" && method === "POST") return mediaUpload(request, env);
   if (path === "/api/admin/videos" && method === "POST") return videoUpload(request, env);
@@ -440,6 +466,9 @@ export default {
         if (!obj.value) return fail("Imagem não encontrada.", 404);
         return new Response(obj.value, { headers: { "Content-Type": obj.metadata?.type || "application/octet-stream",
           "Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff" } });
+      }
+      if (path === "/admin/preview" || path === "/admin/preview/") {
+        return env.ASSETS.fetch(new Request(new URL("/admin/preview/", url), request));
       }
       if (path === "/admin" || path === "/admin/") {
         return env.ASSETS.fetch(new Request(new URL("/admin/", url), request));

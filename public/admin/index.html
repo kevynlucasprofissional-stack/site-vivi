@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Administração | Rio Verde Merece Saber</title><link rel="stylesheet" href="/features.css"><link rel="stylesheet" href="/vendor/quill.snow.css"></head>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Administração | Rio Verde Merece Saber</title><link rel="stylesheet" href="/features.css?v=20261019e"><link rel="stylesheet" href="/vendor/quill.snow.css"></head>
 <body style="margin:0;background:#f8f7f4"><main class="rv-shell">
 <header class="rv-top"><h1>Painel administrativo</h1><a href="/">← Página inicial</a></header>
 <section id="login-panel" class="rv-panel" style="max-width:450px;margin:auto">
@@ -50,12 +50,12 @@
 <p class="rv-help">Chrome/Edge convertem arquivos que conseguem decodificar (MP4, MOV/H.264, WebM). AVI e codecs incomuns podem não funcionar. Máximo de 3 minutos e 15 MiB após conversão.</p>
 <button type="button" class="rv-btn secondary" id="insert-video-file">Converter, enviar e inserir</button>
 <div id="video-upload-status" role="status"></div></div>
-<label class="rv-check"><input type="checkbox" id="news-published"> <span>Publicar notícia imediatamente</span></label>
+<label id="news-publish-control" class="rv-check"><input type="checkbox" id="news-published"> <span>Publicar notícia imediatamente</span></label>
 <div id="editor-status" role="status" aria-live="polite"></div>
-<div class="rv-actions"><button class="rv-btn" type="submit">Salvar notícia</button><button class="rv-btn secondary" id="new-article" type="button">Limpar / nova notícia</button></div>
+<div class="rv-actions"><button class="rv-btn" id="save-article" type="submit">Salvar notícia</button><button class="rv-btn secondary" id="new-article" type="button">Limpar / nova notícia</button></div>
 </form></section>
-<section class="rv-panel"><h2>Prévia dos cards</h2><p class="rv-help">Visualização aproximada no desktop e no celular.</p><div class="rv-preview"><div><h3>Desktop</h3><div id="preview-desktop"></div></div><div><h3>Celular</h3><div class="rv-preview-phone" id="preview-mobile"></div></div></div></section></div>
-<section class="rv-panel" style="margin-top:20px"><h2>Notícias salvas</h2><div id="admin-articles"></div></section>
+<section class="rv-panel"><h2>Prévia do card</h2><p class="rv-help">O mesmo card se adapta ao desktop e ao celular.</p><div id="preview-desktop"></div></section></div>
+<section class="rv-panel" style="margin-top:20px"><h2>Notícias salvas</h2><div id="admin-article-status" role="status" aria-live="polite"></div><div id="admin-articles"></div></section>
 </div><section id="account-panel" class="rv-panel rv-hidden" style="max-width:680px">
 <h2>Conta e segurança</h2>
 <p class="rv-help">Altere o nome de usuário, cadastre um e-mail para entrar ou troque a senha. O e-mail é apenas uma identificação de login; não há recuperação automática de senha por e-mail.</p>
@@ -71,4 +71,4 @@
 </form></section>
 </section></main>
 
-<script src="/vendor/quill.js" defer></script><script src="/editor-video.js" defer></script><script src="/editor-image.js?v=20261019c" defer></script><script src="/admin.js?v=20261019c" defer></script></body></html>
+<script src="/vendor/quill.js" defer></script><script src="/editor-video.js" defer></script><script src="/editor-image.js?v=20261019c" defer></script><script src="/admin.js?v=20261019e" defer></script></body></html>
