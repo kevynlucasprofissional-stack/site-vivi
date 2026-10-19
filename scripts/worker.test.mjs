@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import worker from "../worker.js";
 
 const base = "https://rioverdemerecesaber.com";
@@ -50,4 +51,14 @@ test("não publica relatos no feed de notícias", async () => {
   const text = await response.text();
   assert.ok(!text.includes("email"));
   assert.ok(!text.includes("content"));
+});
+
+
+test("compatibilidade de PBKDF2 com o limite do Cloudflare Workers", () => {
+  const workerSource = readFileSync(new URL("../worker.js", import.meta.url), "utf8");
+  const generatorSource = readFileSync(new URL("./prepare-admin.mjs", import.meta.url), "utf8");
+  const repairSource = readFileSync(new URL("./repair-admin-login.mjs", import.meta.url), "utf8");
+  assert.match(workerSource, /iterations:\s*100000/);
+  assert.match(generatorSource, /,\s*100000,\s*32/);
+  assert.match(repairSource, /,\s*100000,\s*32/);
 });

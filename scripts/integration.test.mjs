@@ -29,7 +29,7 @@ function envForTest() {
       async getWithMetadata(k) { return KV.get(k) || { value: null }; }
     },
     ADMIN_USERNAME: "admin", ADMIN_PASSWORD_SALT: salt,
-    ADMIN_PASSWORD_HASH: pbkdf2Sync("senha-forte-de-teste", Buffer.from(salt, "hex"), 210000, 32, "sha256").toString("hex"),
+    ADMIN_PASSWORD_HASH: pbkdf2Sync("senha-forte-de-teste", Buffer.from(salt, "hex"), 100000, 32, "sha256").toString("hex"),
     ADMIN_SESSION_SECRET: "s".repeat(64),
     TURNSTILE_SITE_KEY: "testing", TURNSTILE_SECRET: "testing"
   };

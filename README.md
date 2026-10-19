@@ -37,6 +37,12 @@ Já foram criados na conta vinculada:
 
 O schema.sql inicial já foi aplicado ao banco remoto via API. Ele é idempotente.
 
+## Reparação do login administrativo
+
+O Cloudflare Workers limita `crypto.subtle.deriveBits(PBKDF2)` a **100.000 iterações** por chamada. A implementação anterior usava 210.000 e não conseguia autenticar no ambiente de produção.
+
+Depois de publicar a correção, executar `node scripts/repair-admin-login.mjs` no PowerShell na raiz do repositório. O script solicita a senha de forma oculta, calcula hash PBKDF2-SHA256 de 100.000 iterações com sal aleatório, atualiza somente o registro `admin_settings` no D1 remoto e apaga o arquivo SQL temporário. O nome de usuário permanece igual e as sessões anteriores são revogadas. Não copie a senha para comandos ou mensagens.
+
 ## Desenvolvimento e testes
 
 - npm install
@@ -47,7 +53,7 @@ O schema.sql inicial já foi aplicado ao banco remoto via API. Ele é idempotent
 Os endpoints POST exigem Origin igual ao domínio do site. O Turnstile é validado
 no backend para denúncias públicas pelo Siteverify. O login administrativo não
 exige Turnstile, utiliza senha forte e possui limite de 7 tentativas por 15 minutos
-por identificador de IP via KV (controle de melhor esforço). O login usa PBKDF2-SHA256, 210.000 iterações e sal
+por identificador de IP via KV (controle de melhor esforço). O login usa PBKDF2-SHA256, 100.000 iterações (limite WebCrypto do Cloudflare Workers) e sal
 aleatório, com sessão HMAC em cookie Secure/HttpOnly/SameSite=Strict por oito horas.
 Dados administrativos exigem autenticação *no Worker*, não apenas no frontend.
 Exportações de denúncias têm Cache-Control: no-store e limitação de 50.000 registros por arquivo.

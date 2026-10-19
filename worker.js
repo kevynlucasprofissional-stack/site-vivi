@@ -35,7 +35,7 @@ async function hmac(secret, value) {
 async function passwordHash(password, salt) {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
   return new Uint8Array(await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: unhex(salt), iterations: 210000 }, key, 256
+    { name: "PBKDF2", hash: "SHA-256", salt: unhex(salt), iterations: 100000 }, key, 256
   ));
 }
 async function signedSession(env, revision = "bootstrap") {
