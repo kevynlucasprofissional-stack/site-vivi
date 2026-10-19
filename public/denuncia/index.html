@@ -1,21 +1,29 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>Faça sua denúncia | Rio Verde Merece Saber</title><link rel="stylesheet" href="/features.css"></head>
-<body style="background:#f8f7f4;margin:0"><main class="rv-shell">
-<header class="rv-top"><h1>Faça sua denúncia</h1><a href="/">← Voltar ao site</a></header>
-<div class="rv-panel" style="max-width:720px;margin:auto">
-<p>Preencha os campos abaixo e relate os fatos com o máximo de clareza possível. Não inclua documentos sigilosos ou dados pessoais de terceiros que não sejam necessários para compreender o relato.</p>
-<p class="rv-help">Este formulário não é um canal oficial de autoridades públicas. A denúncia será encaminhada apenas ao responsável por este site. Para situações urgentes, procure os órgãos competentes.</p>
-<form id="report-form" class="rv-form">
-<label>Nome completo <input name="name" required maxlength="120" autocomplete="name"></label>
-<label>E-mail <input type="email" name="email" required maxlength="254" autocomplete="email"></label>
-<label>Telefone <input type="tel" name="phone" required maxlength="30" autocomplete="tel"></label>
-<label>Descreva sua denúncia <textarea name="message" required minlength="15" maxlength="8000" placeholder="O que aconteceu? Quando e onde? Quais fatos você presenciou ou pode documentar?"></textarea></label>
-<label class="rv-check"><input type="checkbox" name="consent" required> <span>Concordo com o tratamento dos dados fornecidos exclusivamente para recepção, avaliação e eventual contato sobre este relato. Estou ciente de que este não é um canal anônimo.</span></label>
-<div class="rv-help">Seus dados não serão mostrados no feed público de notícias. O envio não significa apuração ou confirmação dos fatos descritos.</div>
-<div id="challenge" aria-label="Verificação antispam"></div>
-<div id="report-status" role="status" aria-live="polite"></div>
-<button class="rv-btn" type="submit">Enviar denúncia</button>
-</form>
-<div id="report-done" class="rv-success rv-hidden" role="status"><h2>Denúncia enviada com sucesso</h2><p>O relato foi recebido para análise. Guarde o protocolo:</p><strong id="protocol"></strong><p class="rv-help">O envio não equivale a uma denúncia formal perante órgão público.</p><a href="/" class="rv-link">Voltar à página inicial</a></div>
-</div></main>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script><script defer src="/denuncia.js"></script>
-</body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Faça sua denúncia | Rio Verde Merece Saber</title>
+  <link rel="stylesheet" href="/features.css">
+</head>
+<body style="background:#f8f7f4;margin:0">
+  <main class="rv-shell">
+    <header class="rv-top"><h1>Faça sua denúncia</h1></header>
+    <section class="rv-panel" style="max-width:720px;margin:auto">
+      <form id="report-form" class="rv-form">
+        <label for="report-message">Descreva sua denúncia</label>
+        <textarea id="report-message" name="message" required minlength="15" maxlength="8000"></textarea>
+        <div id="report-status" role="status" aria-live="polite"></div>
+        <button class="rv-btn" type="submit">Enviar denúncia</button>
+      </form>
+      <div id="report-done" class="rv-success rv-hidden" role="status">
+        <h2>Denúncia enviada com sucesso</h2>
+        <p>Protocolo: <strong id="protocol"></strong></p>
+      </div>
+    </section>
+  </main>
+  <script defer src="/denuncia.js?v=20261019-anon"></script>
+</body>
+</html>

@@ -175,14 +175,14 @@ function csvCell(value) {
 }
 async function exportsHandler(env, format) {
   if (!["csv", "json"].includes(format)) return fail("Formato inválido");
-  const data = await env.DB.prepare("SELECT id,name,email,phone,content,consent_at,created_at FROM reports ORDER BY created_at DESC LIMIT 50000").all();
+  const data = await env.DB.prepare("SELECT id,content,created_at FROM reports ORDER BY created_at DESC LIMIT 50000").all();
   const items = data.results;
   let body, contentType, extension;
   if (format === "json") {
     body = JSON.stringify(items, null, 2);
     contentType = "application/json; charset=utf-8"; extension = "json";
   } else {
-    const fields = ["id", "name", "email", "phone", "content", "consent_at", "created_at"];
+    const fields = ["id", "content", "created_at"];
     body = "\ufeff" + [fields.join(";"), ...items.map(r => fields.map(k => csvCell(r[k])).join(";"))].join("\r\n");
     contentType = "text/csv; charset=utf-8"; extension = "csv";
   }
@@ -369,7 +369,7 @@ async function adminApi(request, env, path, url) {
   if (path === "/api/admin/reports" && method === "GET") {
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 50));
     const offset = Math.min(100000, Math.max(0, Number(url.searchParams.get("offset")) || 0));
-    const rows = await env.DB.prepare("SELECT * FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+    const rows = await env.DB.prepare("SELECT id,content,created_at FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     return json({ items: rows.results, limit, offset }, 200, true);
   }
   if (path === "/api/admin/reports/export" && method === "GET") {
@@ -391,15 +391,13 @@ async function adminApi(request, env, path, url) {
 async function reportApi(request, env) {
   if (!await limiter(env, request, "reports", 3)) return fail("Limite de envios atingido. Aguarde 15 minutos.", 429);
   const data = await readJson(request, 12000);
-  if (!isText(data.name, 120) || !isText(data.email, 254) ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) ||
-      !isText(data.phone, 30) || !isText(data.message, 8000) ||
-      data.message.trim().length < 15 || data.consent !== true) return fail("Preencha todos os campos e autorize o tratamento dos dados.");
-  if (!await turnstile(env, data.turnstileToken, request)) return fail("Verificação antispam inválida.", 403);
+  if (!isText(data.message, 8000) || data.message.trim().length < 15) {
+    return fail("Descreva sua denúncia com pelo menos 15 caracteres.");
+  }
   const id = crypto.randomUUID(), time = now();
   await env.DB.prepare(
     "INSERT INTO reports (id,name,email,phone,content,consent_at,created_at) VALUES (?,?,?,?,?,?,?)"
-  ).bind(id, data.name.trim(), data.email.trim(), data.phone.trim(), data.message.trim(), time, time).run();
+  ).bind(id, "Anônima", "", "", data.message.trim(), "", time).run();
   return json({ ok: true, protocol: id }, 201, true);
 }
 export default {

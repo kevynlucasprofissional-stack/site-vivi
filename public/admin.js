@@ -109,7 +109,7 @@
       const tbody = byId("report-list");
       for (const r of items) {
         const row = el("tr");
-        for (const value of [new Date(r.created_at).toLocaleString("pt-BR"), r.name, r.email, r.phone, r.content]) {
+        for (const value of [new Date(r.created_at).toLocaleString("pt-BR"), r.content]) {
           const td = el("td", value);
           if (value === r.content) td.className = "rv-report";
           row.appendChild(td);
