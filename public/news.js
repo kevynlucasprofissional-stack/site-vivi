@@ -117,16 +117,23 @@
     }
     if (chunks.length) appendLine({});
   }
-  async function detail(slug) {
+  async function detail(slug, isAdminPreview = false) {
     const view = document.getElementById("news-detail");
     const list = document.getElementById("news-list");
     if (!view || !list) return;
     list.classList.add("rv-hidden"); view.classList.remove("rv-hidden");
     view.replaceChildren(el("p", "", "Carregando notícia..."));
     try {
-      const a = await api("/api/news/" + encodeURIComponent(slug));
+      const a = await api((isAdminPreview ? "/api/admin/news/" : "/api/news/") + encodeURIComponent(slug));
       document.title = a.title + " | Rio Verde Merece Saber";
-      view.replaceChildren(el("p", "rv-help", date(a.publishedAt)), el("h1", "", a.title), el("p", "rv-help", a.summary));
+      view.replaceChildren(el("p", "rv-help",
+        a.publishedAt ? date(a.publishedAt) : "Rascunho não publicado"),
+        el("h1", "", a.title), el("p", "rv-help", a.summary));
+      if (isAdminPreview) {
+        view.prepend(el("p", "rv-preview-banner",
+          a.published ? "PRÉVIA ADMINISTRATIVA — Notícia publicada" :
+            "PRÉVIA ADMINISTRATIVA — Rascunho não publicado"));
+      }
       if (a.coverUrl) {
         const img = el("img"); img.src = a.coverUrl; img.alt = "Capa: " + a.title; view.appendChild(img);
       }
@@ -157,7 +164,13 @@
   }
   home();
   const path = window.location.pathname;
-  if (path === "/noticias" || path === "/noticias/") listing();
+  if (path === "/admin/preview" || path === "/admin/preview/") {
+    const id = new URLSearchParams(window.location.search).get("id") || "";
+    if (/^[a-f0-9-]{36}$/.test(id)) detail(id, true);
+    else document.getElementById("news-detail")?.replaceChildren(
+      el("p", "rv-error", "Prévia inválida. Abra a notícia pelo painel administrativo.")
+    );
+  } else if (path === "/noticias" || path === "/noticias/") listing();
   else if (path.startsWith("/noticias/")) {
     const slug = path.slice("/noticias/".length).replace(/\/$/, "");
     if (slug && slug !== "index.html") detail(slug);

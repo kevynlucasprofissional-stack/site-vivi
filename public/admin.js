@@ -4,7 +4,7 @@
   const loginPanel = byId("login-panel"), dashboard = byId("dashboard"), loginForm = byId("login-form");
   const loginStatus = byId("login-status"), reportsPanel = byId("reports-panel"), newsPanel = byId("news-panel"), accountPanel = byId("account-panel");
   const editorStatus = byId("editor-status");
-  let reportOffset = 0, coverUrl = "", editingId = null;
+  let reportOffset = 0, coverUrl = "", editingId = null, editingPublished = false;
   let quill, imageEditor;
   function el(tag, text, cls) {
     const node = document.createElement(tag);
@@ -99,7 +99,12 @@
   }
   function renderPreview() {
     byId("preview-desktop").replaceChildren(previewCard());
-    byId("preview-mobile").replaceChildren(previewCard());
+  }
+  function updateSaveMode() {
+    byId("news-publish-control").classList.toggle("rv-hidden", editingPublished);
+    byId("save-article").textContent = editingPublished
+      ? "Atualizar"
+      : (byId("news-published").checked ? "Postar notícia" : "Salvar rascunho");
   }
   async function loadReports(reset) {
     if (reset) { reportOffset = 0; byId("report-list").replaceChildren(); }
@@ -131,6 +136,44 @@
       setTimeout(() => URL.revokeObjectURL(link), 1000);
     } catch (error) { byId("report-empty").textContent = error.message; }
   }
+  function editArticle(item) {
+    editingId = item.id;
+    editingPublished = Boolean(item.published);
+    coverUrl = item.coverUrl || "";
+    byId("news-title").value = item.title;
+    byId("news-slug").value = item.slug;
+    byId("news-summary").value = item.summary;
+    byId("news-published").checked = Boolean(item.published);
+    quill.setContents(item.body || { ops: [] });
+    imageEditor?.refresh(null);
+    byId("editor-heading").textContent = editingPublished ? "Editar notícia publicada" : "Editar rascunho";
+    updateSaveMode();
+    feedback(editorStatus, editingPublished
+      ? "Edite e clique em Atualizar para publicar as alterações."
+      : "Editando um rascunho.");
+    renderPreview();
+    byId("news-title").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  async function articleAction(item, action, trigger) {
+    if (action === "publish" && !window.confirm("Publicar esta notícia no site agora?")) return;
+    if (action === "delete" && !window.confirm(
+      "Excluir permanentemente a notícia «" + item.title + "»? Esta ação não pode ser desfeita."
+    )) return;
+    trigger.disabled = true;
+    try {
+      const path = "/api/admin/news/" + encodeURIComponent(item.id);
+      await req(action === "publish" ? path + "/publish" : path, {
+        method: action === "publish" ? "POST" : "DELETE"
+      });
+      if (editingId === item.id) clearForm();
+      feedback(byId("admin-article-status"),
+        action === "publish" ? "Notícia publicada com sucesso." : "Notícia excluída com sucesso.");
+      await loadArticles();
+    } catch (error) {
+      feedback(byId("admin-article-status"), error.message, true);
+      trigger.disabled = false;
+    }
+  }
   async function loadArticles() {
     const area = byId("admin-articles");
     area.replaceChildren(el("p", "Carregando..."));
@@ -139,30 +182,38 @@
       area.replaceChildren();
       if (!items.length) { area.appendChild(el("p", "Nenhuma matéria salva.")); return; }
       for (const item of items) {
-        const line = el("div", undefined, "rv-actions rv-mb");
-        line.appendChild(el("strong", item.title + (item.published ? " · Publicada" : " · Rascunho")));
-        const button = el("button", "Editar", "rv-btn secondary"); button.type = "button";
-        button.onclick = function () {
-          editingId = item.id; coverUrl = item.coverUrl || "";
-          byId("news-title").value = item.title; byId("news-slug").value = item.slug;
-          byId("news-summary").value = item.summary;
-          byId("news-published").checked = item.published;
-          quill.setContents(item.body || { ops: [] });
-          imageEditor?.refresh(null);
-          byId("editor-heading").textContent = "Editar notícia";
-          feedback(editorStatus, "Editando uma matéria salva.");
-          renderPreview();
-          byId("news-title").scrollIntoView({ behavior: "smooth", block: "start" });
-        };
-        line.appendChild(button); area.appendChild(line);
+        const line = el("div", undefined, "rv-saved-article");
+        const heading = el("div", undefined, "rv-saved-heading");
+        heading.appendChild(el("strong", item.title));
+        heading.appendChild(el("span", item.published ? "Publicada" : "Rascunho",
+          item.published ? "rv-article-state rv-state-published" : "rv-article-state rv-state-draft"));
+        line.appendChild(heading);
+        const actions = el("div", undefined, "rv-actions");
+        function actionButton(text, fn, cls = "rv-btn secondary") {
+          const button = el("button", text, cls);
+          button.type = "button";
+          button.onclick = () => fn(button);
+          actions.appendChild(button);
+        }
+        actionButton("Editar", () => editArticle(item));
+        if (!item.published) actionButton("Postar", button => articleAction(item, "publish", button), "rv-btn");
+        actionButton("Ver preview", () => {
+          window.open("/admin/preview/?id=" + encodeURIComponent(item.id),
+            "_blank", "noopener,noreferrer");
+        });
+        actionButton("Excluir", button => articleAction(item, "delete", button),
+          "rv-btn secondary rv-delete-button");
+        line.appendChild(actions);
+        area.appendChild(line);
       }
     } catch (error) { area.replaceChildren(el("p", error.message, "rv-error")); }
   }
   function clearForm() {
-    editingId = null; coverUrl = ""; byId("news-form").reset();
+    editingId = null; editingPublished = false; coverUrl = ""; byId("news-form").reset();
     if (quill) quill.setText("");
     imageEditor?.refresh(null);
     byId("editor-heading").textContent = "Nova notícia";
+    updateSaveMode();
     feedback(editorStatus, "");
     byId("news-cover-status").textContent = "";
     renderPreview();
@@ -235,6 +286,8 @@
   byId("export-csv").onclick = () => exportAs("csv");
   byId("export-json").onclick = () => exportAs("json");
   byId("new-article").onclick = clearForm;
+  byId("news-published").addEventListener("change", updateSaveMode);
+  updateSaveMode();
   byId("news-title").addEventListener("input", renderPreview);
   byId("news-summary").addEventListener("input", renderPreview);
   byId("news-cover").addEventListener("change", async function () {
@@ -262,7 +315,7 @@
         slug: byId("news-slug").value,
         summary: byId("news-summary").value,
         coverUrl: coverUrl || null,
-        body: quill.getContents(), published: byId("news-published").checked
+        body: quill.getContents(), published: editingPublished || byId("news-published").checked
       };
       const path = editingId ? "/api/admin/news/" + editingId : "/api/admin/news";
       await req(path, { method: editingId ? "PUT" : "POST",
