@@ -45,7 +45,9 @@ O schema.sql inicial já foi aplicado ao banco remoto via API. Ele é idempotent
 - npm test
 
 Os endpoints POST exigem Origin igual ao domínio do site. O Turnstile é validado
-no backend pelo Siteverify. O login usa PBKDF2-SHA256, 210.000 iterações e sal
+no backend para denúncias públicas pelo Siteverify. O login administrativo não
+exige Turnstile, utiliza senha forte e possui limite de 7 tentativas por 15 minutos
+por identificador de IP via KV (controle de melhor esforço). O login usa PBKDF2-SHA256, 210.000 iterações e sal
 aleatório, com sessão HMAC em cookie Secure/HttpOnly/SameSite=Strict por oito horas.
 Dados administrativos exigem autenticação *no Worker*, não apenas no frontend.
 Exportações de denúncias têm Cache-Control: no-store e limitação de 50.000 registros por arquivo.

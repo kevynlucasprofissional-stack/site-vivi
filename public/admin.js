@@ -4,7 +4,7 @@
   const loginPanel = byId("login-panel"), dashboard = byId("dashboard"), loginForm = byId("login-form");
   const loginStatus = byId("login-status"), reportsPanel = byId("reports-panel"), newsPanel = byId("news-panel"), accountPanel = byId("account-panel");
   const editorStatus = byId("editor-status");
-  let loginToken = "", turnstileId = null, reportOffset = 0, coverUrl = "", editingId = null;
+  let reportOffset = 0, coverUrl = "", editingId = null;
   let quill;
   function el(tag, text, cls) {
     const node = document.createElement(tag);
@@ -41,27 +41,6 @@
     if (reports) loadReports(true);
     if (articles) loadArticles();
     if (account) loadAccount();
-  }
-  async function initTurnstile() {
-    try {
-      const { turnstileSiteKey } = await req("/api/config");
-      if (!turnstileSiteKey) throw new Error("Turnstile ainda não configurado para o login.");
-      let attempts = 0;
-      const timer = setInterval(function () {
-        attempts++;
-        if (window.turnstile) {
-          clearInterval(timer);
-          turnstileId = turnstile.render("#login-challenge", {
-            sitekey: turnstileSiteKey,
-            callback(value) { loginToken = value; },
-            "expired-callback"() { loginToken = ""; },
-            "error-callback"() { loginToken = ""; }
-          });
-        } else if (attempts > 40) {
-          clearInterval(timer); feedback(loginStatus, "Falha ao carregar verificação antispam.", true);
-        }
-      }, 250);
-    } catch (error) { feedback(loginStatus, error.message, true); }
   }
   async function showDashboard() {
     loginPanel.classList.add("rv-hidden");
@@ -230,19 +209,17 @@
   });
   loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-    if (!loginToken) { feedback(loginStatus, "Conclua a verificação antispam.", true); return; }
     const btn = loginForm.querySelector("button[type=submit]"); btn.disabled = true;
     const f = new FormData(loginForm);
     try {
       await req("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: f.get("username"), password: f.get("password"), turnstileToken: loginToken }) });
+        body: JSON.stringify({ username: f.get("username"), password: f.get("password") }) });
       loginForm.querySelector('[name=password]').value = "";
       feedback(loginStatus, "");
       await showDashboard();
     } catch (error) { feedback(loginStatus, error.message, true); }
     finally {
-      loginToken = ""; btn.disabled = false;
-      if (turnstileId !== null && window.turnstile) turnstile.reset(turnstileId);
+      btn.disabled = false;
     }
   });
   byId("logout").onclick = async function () {
@@ -295,5 +272,5 @@
     } catch (error) { feedback(editorStatus, error.message, true); }
     finally { button.disabled = false; }
   });
-  req("/api/admin/session").then(showDashboard).catch(initTurnstile);
+  req("/api/admin/session").then(showDashboard).catch(() => {});
 })();
