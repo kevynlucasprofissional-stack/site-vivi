@@ -83,8 +83,7 @@ test("integração: sessão, publicação, denúncia, acesso privado e CSV", asy
     assert.equal((await full.json()).body.ops[0].insert, "Primeiro parágrafo da matéria.\n");
 
     const report = await worker.fetch(request("/api/reports", "POST", {
-      name: "=1+1", email: "denunciante@example.com", phone: "62999999999",
-      message: "Um relato fictício de teste com conteúdo suficiente.", consent: true, turnstileToken: "test"
+      message: "=1+1 Um relato fictício de teste com conteúdo suficiente."
     }), env);
     assert.equal(report.status, 201, await report.clone().text());
     assert.ok((await report.json()).protocol);
@@ -93,13 +92,17 @@ test("integração: sessão, publicação, denúncia, acesso privado e CSV", asy
     assert.equal(denied.status, 401);
     const privateReports = await worker.fetch(request("/api/admin/reports", "GET", undefined, cookie), env);
     assert.equal(privateReports.status, 200);
-    assert.equal((await privateReports.json()).items.length, 1);
+    const rows = (await privateReports.json()).items;
+    assert.equal(rows.length, 1);
+    assert.deepEqual(Object.keys(rows[0]).sort(), ["content", "created_at", "id"]);
 
     const exportCsv = await worker.fetch(request("/api/admin/reports/export?format=csv", "GET", undefined, cookie), env);
     assert.equal(exportCsv.status, 200);
     const csv = await exportCsv.text();
     assert.ok(csv.includes("'=1+1"), "prevenção contra fórmulas CSV");
-    assert.ok(csv.includes("denunciante@example.com"));
+    assert.ok(csv.includes("content"));
+    assert.ok(!csv.includes("phone"));
+    assert.ok(!csv.includes("email"));
     assert.equal(exportCsv.headers.get("Cache-Control"), "no-store");
 
     const logout = await worker.fetch(request("/api/admin/logout", "POST", undefined, cookie), env);
@@ -217,4 +220,34 @@ test("vídeos: exige sessão, valida WebM, reproduz com Range e publica embeds s
     }, cookie), env);
     assert.equal(unsafe.status, 400);
   } finally { globalThis.fetch = realFetch; }
+});
+
+
+test("denúncias anônimas: texto único, sem cadastro nem dados de contato persistidos", async () => {
+  const env = envForTest();
+  const report = await worker.fetch(request("/api/reports", "POST", {
+    message: "Relato fictício de teste para verificar o anonimato.",
+    name: "Ignorado", email: "ignorado@example.invalid", phone: "00000000",
+    consent: false
+  }), env);
+  assert.equal(report.status, 201, await report.clone().text());
+  assert.match((await report.json()).protocol, /^[0-9a-f-]{36}$/);
+
+  const record = await env.DB.prepare("SELECT name,email,phone,content,consent_at FROM reports").first();
+  assert.deepEqual({ ...record }, {
+    name: "Anônima", email: "", phone: "", consent_at: "",
+    content: "Relato fictício de teste para verificar o anonimato."
+  });
+  const invalid = await worker.fetch(request("/api/reports", "POST", { message: "" }), env);
+  assert.equal(invalid.status, 400);
+  const denied = await worker.fetch(request("/api/admin/reports"), env);
+  assert.equal(denied.status, 401);
+  const page = readFileSync(new URL("../public/denuncia/index.html", import.meta.url), "utf8");
+  const js = readFileSync(new URL("../public/denuncia.js", import.meta.url), "utf8");
+  assert.equal((page.match(/<textarea\b/g) || []).length, 1);
+  assert.equal((page.match(/<button\b/g) || []).length, 1);
+  assert.equal((page.match(/<input\b/g) || []).length, 0);
+  assert.ok(!page.includes("turnstile"));
+  assert.ok(!js.includes("turnstile"));
+  assert.ok(!page.includes('name="email"'));
 });
