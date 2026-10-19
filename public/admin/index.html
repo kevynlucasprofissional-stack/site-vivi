@@ -3,13 +3,13 @@
 <header class="rv-top"><h1>Painel administrativo</h1><a href="/">← Página inicial</a></header>
 <section id="login-panel" class="rv-panel" style="max-width:450px;margin:auto">
 <h2>Entrar como administrador</h2><form id="login-form" class="rv-form">
-<label>Usuário <input name="username" autocomplete="username" required maxlength="120"></label>
+<label>Usuário ou e-mail <input name="username" autocomplete="username" required maxlength="120"></label>
 <label>Senha <input name="password" type="password" autocomplete="current-password" required></label>
 <div id="login-challenge"></div><div id="login-status" role="status" aria-live="polite"></div>
 <button class="rv-btn" type="submit">Entrar</button></form></section>
 <section id="dashboard" class="rv-hidden">
 <div class="rv-actions rv-mb"><button id="logout" class="rv-btn secondary">Sair</button></div>
-<nav class="rv-tabs" aria-label="Funções administrativas"><button class="rv-btn" id="reports-tab" type="button">Denúncias</button><button class="rv-btn secondary" id="news-tab" type="button">Publicar notícias</button></nav>
+<nav class="rv-tabs" aria-label="Funções administrativas"><button class="rv-btn" id="reports-tab" type="button">Denúncias</button><button class="rv-btn secondary" id="news-tab" type="button">Publicar notícias</button><button class="rv-btn secondary" id="account-tab" type="button">Conta e segurança</button></nav>
 <div id="reports-panel" class="rv-panel">
 <h2>Denúncias recebidas</h2><p class="rv-help">Dados pessoais e relatos confidenciais. Evite compartilhar ou baixar em dispositivos públicos.</p>
 <div class="rv-actions rv-mb"><button class="rv-btn secondary" id="export-csv">Baixar CSV</button><button class="rv-btn secondary" id="export-json">Baixar JSON</button><button class="rv-btn secondary" id="refresh-reports">Atualizar</button></div>
@@ -30,6 +30,19 @@
 </form></section>
 <section class="rv-panel"><h2>Prévia dos cards</h2><p class="rv-help">Visualização aproximada no desktop e no celular.</p><div class="rv-preview"><div><h3>Desktop</h3><div id="preview-desktop"></div></div><div><h3>Celular</h3><div class="rv-preview-phone" id="preview-mobile"></div></div></div></section></div>
 <section class="rv-panel" style="margin-top:20px"><h2>Notícias salvas</h2><div id="admin-articles"></div></section>
-</div></section></main>
+</div><section id="account-panel" class="rv-panel rv-hidden" style="max-width:680px">
+<h2>Conta e segurança</h2>
+<p class="rv-help">Altere o nome de usuário, cadastre um e-mail para entrar ou troque a senha. O e-mail é apenas uma identificação de login; não há recuperação automática de senha por e-mail.</p>
+<form id="account-form" class="rv-form" autocomplete="off">
+<label>Nome de usuário <input id="account-username" required minlength="3" maxlength="80" pattern="[A-Za-z0-9._-]{3,80}" autocomplete="username"></label>
+<label>E-mail para login (opcional) <input id="account-email" type="email" maxlength="254" autocomplete="email" placeholder="voce@exemplo.com"></label>
+<label>Nova senha (opcional, mínimo 12 caracteres) <input id="account-new-password" type="password" minlength="12" maxlength="256" autocomplete="new-password"></label>
+<label>Confirmar nova senha <input id="account-confirm-password" type="password" minlength="12" maxlength="256" autocomplete="new-password"></label>
+<label>Senha atual — obrigatória para confirmar alterações <input id="account-current-password" type="password" required maxlength="256" autocomplete="current-password"></label>
+<p class="rv-help">Ao salvar, as sessões anteriores serão encerradas. Esta sessão continuará autenticada com os novos dados.</p>
+<div id="account-status" role="status" aria-live="polite"></div>
+<button type="submit" class="rv-btn">Salvar credenciais</button>
+</form></section>
+</section></main>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="/vendor/quill.js" defer></script><script src="/admin.js" defer></script></body></html>

@@ -107,3 +107,58 @@ test("integração: sessão, publicação, denúncia, acesso privado e CSV", asy
     assert.ok(logout.headers.get("Set-Cookie").includes("Max-Age=0"));
   } finally { globalThis.fetch = realFetch; }
 });
+
+
+test("admin: altera usuário/e-mail/senha, exige senha atual e revoga sessões antigas", async () => {
+  const env = envForTest();
+  globalThis.fetch = async url => {
+    if (String(url).startsWith("https://challenges.cloudflare.com/")) {
+      return new Response(JSON.stringify({ success: true, hostname: "rioverdemerecesaber.com" }),
+        { headers: { "Content-Type": "application/json" } });
+    }
+    return realFetch(url);
+  };
+  async function login(username, password) {
+    return worker.fetch(request("/api/admin/login", "POST", {
+      username, password, turnstileToken: "test"
+    }), env);
+  }
+  try {
+    const first = await login("admin", "senha-forte-de-teste");
+    assert.equal(first.status, 200);
+    const initialCookie = first.headers.get("Set-Cookie").split(";")[0];
+    assert.equal((await worker.fetch(request("/api/admin/account"), env)).status, 401);
+    const original = await worker.fetch(request("/api/admin/account", "GET", undefined, initialCookie), env);
+    assert.equal((await original.json()).username, "admin");
+    const forbidden = await worker.fetch(request("/api/admin/account", "PUT", {
+      username: "novo.editor", email: "editor@example.com", currentPassword: "incorreta"
+    }, initialCookie), env);
+    assert.equal(forbidden.status, 403);
+    const renamed = await worker.fetch(request("/api/admin/account", "PUT", {
+      username: "novo.editor", email: "editor@example.com",
+      currentPassword: "senha-forte-de-teste"
+    }, initialCookie), env);
+    assert.equal(renamed.status, 200, await renamed.clone().text());
+    const cookie2 = renamed.headers.get("Set-Cookie").split(";")[0];
+    assert.equal((await worker.fetch(request("/api/admin/reports", "GET", undefined, initialCookie), env)).status, 401);
+    assert.equal((await worker.fetch(request("/api/admin/reports", "GET", undefined, cookie2), env)).status, 200);
+    assert.equal((await login("admin", "senha-forte-de-teste")).status, 401);
+    assert.equal((await login("editor@example.com", "senha-forte-de-teste")).status, 200);
+    const tooShort = await worker.fetch(request("/api/admin/account", "PUT", {
+      username: "novo.editor", email: "editor@example.com",
+      currentPassword: "senha-forte-de-teste", newPassword: "fraca"
+    }, cookie2), env);
+    assert.equal(tooShort.status, 400);
+    const newPass = "senha-forte-atualizada-de-teste";
+    const updated = await worker.fetch(request("/api/admin/account", "PUT", {
+      username: "novo.editor", email: "editor@example.com",
+      currentPassword: "senha-forte-de-teste", newPassword: newPass
+    }, cookie2), env);
+    assert.equal(updated.status, 200);
+    const cookie3 = updated.headers.get("Set-Cookie").split(";")[0];
+    assert.equal((await worker.fetch(request("/api/admin/session", "GET", undefined, cookie2), env)).status, 401);
+    assert.equal((await worker.fetch(request("/api/admin/session", "GET", undefined, cookie3), env)).status, 200);
+    assert.equal((await login("novo.editor", "senha-forte-de-teste")).status, 401);
+    assert.equal((await login("novo.editor", newPass)).status, 200);
+  } finally { globalThis.fetch = realFetch; }
+});

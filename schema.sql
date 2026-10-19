@@ -23,3 +23,17 @@ CREATE TABLE IF NOT EXISTS articles (
   published_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_articles_public ON articles(published, published_at DESC);
+
+
+-- Credenciais editáveis no painel. O segredo HMAC permanece no Worker.
+-- O registro ainda não existe até o primeiro ajuste no painel; inicialmente
+-- o sistema valida as credenciais de bootstrap em secrets da Cloudflare.
+CREATE TABLE IF NOT EXISTS admin_settings (
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  username TEXT NOT NULL,
+  email TEXT,
+  password_salt TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  revision TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

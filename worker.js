@@ -38,10 +38,24 @@ async function passwordHash(password, salt) {
     { name: "PBKDF2", hash: "SHA-256", salt: unhex(salt), iterations: 210000 }, key, 256
   ));
 }
-async function signedSession(env) {
-  const data = { exp: Date.now() + 8 * 3600 * 1000, nonce: crypto.randomUUID() };
+async function signedSession(env, revision = "bootstrap") {
+  const data = { exp: Date.now() + 8 * 3600 * 1000, nonce: crypto.randomUUID(), rev: revision };
   const message = base64Url(encoder.encode(JSON.stringify(data)));
   return message + "." + base64Url(await hmac(env.ADMIN_SESSION_SECRET, message));
+}
+async function activeCredentials(env) {
+  const row = await env.DB.prepare(
+    "SELECT username,email,password_hash,password_salt,revision FROM admin_settings WHERE id=1"
+  ).first();
+  if (row) return {
+    username: row.username, email: row.email, hash: row.password_hash,
+    salt: row.password_salt, revision: row.revision
+  };
+  if (!env.ADMIN_USERNAME || !env.ADMIN_PASSWORD_HASH || !env.ADMIN_PASSWORD_SALT) return null;
+  return {
+    username: env.ADMIN_USERNAME, email: null,
+    hash: env.ADMIN_PASSWORD_HASH, salt: env.ADMIN_PASSWORD_SALT, revision: "bootstrap"
+  };
 }
 async function isAdmin(request, env) {
   if (!env.ADMIN_SESSION_SECRET || env.ADMIN_SESSION_SECRET.length < 32) return false;
@@ -55,7 +69,10 @@ async function isAdmin(request, env) {
     const supplied = decodeBase64Url(pieces[1]);
     if (!equal(expected, supplied)) return false;
     const data = JSON.parse(new TextDecoder().decode(decodeBase64Url(pieces[0])));
-    return Number.isFinite(data.exp) && data.exp > Date.now() && data.exp <= Date.now() + 8 * 3600 * 1000;
+    if (!(Number.isFinite(data.exp) && data.exp > Date.now() &&
+        data.exp <= Date.now() + 8 * 3600 * 1000)) return false;
+    const credentials = await activeCredentials(env);
+    return !!credentials && data.rev === credentials.revision;
   } catch { return false; }
 }
 function correctOrigin(request) {
@@ -216,27 +233,78 @@ async function mediaUpload(request, env) {
   await env.MEDIA.put("img:" + key, body, { metadata: { type: file.type } });
   return json({ url: "/media/" + key }, 201, true);
 }
+async function accountUpdate(request, env) {
+  if (!await limiter(env, request, "account", 6)) return fail("Muitas tentativas. Aguarde 15 minutos.", 429);
+  const data = await readJson(request, 6000);
+  const current = await activeCredentials(env);
+  if (!current || !isText(data.currentPassword, 256)) return fail("Senha atual obrigatória.", 400);
+  const supplied = await passwordHash(data.currentPassword, current.salt);
+  if (!equal(supplied, unhex(current.hash))) return fail("Senha atual incorreta.", 403);
+  const username = typeof data.username === "string" ? data.username.trim() : "";
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  if (!/^[a-zA-Z0-9._-]{3,80}$/.test(username)) {
+    return fail("Usuário deve ter entre 3 e 80 caracteres, usando letras, números, ponto, hífen ou sublinhado.");
+  }
+  if (email && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    return fail("E-mail inválido.");
+  }
+  const newPassword = data.newPassword || "";
+  if (typeof newPassword !== "string" || newPassword.length > 256 ||
+      (newPassword && newPassword.length < 12)) return fail("A nova senha precisa de 12 a 256 caracteres.");
+  if (!newPassword && username === current.username && email === (current.email || "")) {
+    return fail("Nenhuma alteração informada.");
+  }
+  const salt = newPassword ? hex(crypto.getRandomValues(new Uint8Array(16))) : current.salt;
+  const hash = newPassword ? hex(await passwordHash(newPassword, salt)) : current.hash;
+  const revision = crypto.randomUUID();
+  let result;
+  if (current.revision === "bootstrap") {
+    result = await env.DB.prepare(
+      "INSERT OR IGNORE INTO admin_settings (id,username,email,password_salt,password_hash,revision,updated_at) VALUES (1,?,?,?,?,?,?)"
+    ).bind(username, email || null, salt, hash, revision, now()).run();
+  } else {
+    result = await env.DB.prepare(
+      "UPDATE admin_settings SET username=?,email=?,password_salt=?,password_hash=?,revision=?,updated_at=? WHERE id=1 AND revision=?"
+    ).bind(username, email || null, salt, hash, revision, now(), current.revision).run();
+  }
+  if ((result?.meta?.changes ?? result?.changes ?? 0) !== 1) {
+    return fail("Os dados administrativos mudaram em outra sessão. Entre novamente e tente outra vez.", 409);
+  }
+  const token = await signedSession(env, revision);
+  const response = json({ ok: true, username, email }, 200, true);
+  response.headers.set("Set-Cookie",
+    "rv_admin=" + token + "; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800");
+  return response;
+}
 async function adminApi(request, env, path, url) {
   const method = request.method;
   if (path === "/api/admin/login" && method === "POST") {
-    if (!env.ADMIN_PASSWORD_HASH || !env.ADMIN_PASSWORD_SALT || !env.ADMIN_USERNAME ||
-        !env.ADMIN_SESSION_SECRET || env.ADMIN_SESSION_SECRET.length < 32) return fail("Administração não configurada.", 503);
+    if (!env.ADMIN_SESSION_SECRET || env.ADMIN_SESSION_SECRET.length < 32) {
+      return fail("Administração não configurada.", 503);
+    }
+    const credentials = await activeCredentials(env);
+    if (!credentials) return fail("Administração não configurada.", 503);
     if (!await limiter(env, request, "login", 7)) return fail("Muitas tentativas. Aguarde 15 minutos.", 429);
     const data = await readJson(request, 5000);
-    if (!isText(data.password, 256) || !isText(data.username, 120) || !await turnstile(env, data.turnstileToken, request)) {
-      return fail("Verificação inválida.", 403);
-    }
-    const actual = await passwordHash(data.password, env.ADMIN_PASSWORD_SALT);
-    const usernameValid = data.username === env.ADMIN_USERNAME;
-    const valid = equal(actual, unhex(env.ADMIN_PASSWORD_HASH));
+    if (!isText(data.password, 256) || !isText(data.username, 120) ||
+        !await turnstile(env, data.turnstileToken, request)) return fail("Verificação inválida.", 403);
+    const actual = await passwordHash(data.password, credentials.salt);
+    const usernameValid = data.username === credentials.username ||
+      (!!credentials.email && data.username.toLowerCase() === credentials.email.toLowerCase());
+    const valid = equal(actual, unhex(credentials.hash));
     if (!usernameValid || !valid) { await sleep(200); return fail("Credenciais inválidas.", 401); }
-    const token = await signedSession(env);
+    const token = await signedSession(env, credentials.revision);
     const response = json({ ok: true }, 200, true);
     response.headers.set("Set-Cookie", "rv_admin=" + token + "; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800");
     return response;
   }
   if (!await isAdmin(request, env)) return fail("Acesso administrativo não autorizado.", 401);
   if (path === "/api/admin/session" && method === "GET") return json({ authenticated: true }, 200, true);
+  if (path === "/api/admin/account" && method === "GET") {
+    const current = await activeCredentials(env);
+    return json({ username: current.username, email: current.email || "" }, 200, true);
+  }
+  if (path === "/api/admin/account" && method === "PUT") return accountUpdate(request, env);
   if (path === "/api/admin/logout" && method === "POST") {
     const response = json({ ok: true }, 200, true);
     response.headers.set("Set-Cookie", "rv_admin=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");

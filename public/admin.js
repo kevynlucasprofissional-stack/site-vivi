@@ -2,7 +2,7 @@
   "use strict";
   const byId = id => document.getElementById(id);
   const loginPanel = byId("login-panel"), dashboard = byId("dashboard"), loginForm = byId("login-form");
-  const loginStatus = byId("login-status"), reportsPanel = byId("reports-panel"), newsPanel = byId("news-panel");
+  const loginStatus = byId("login-status"), reportsPanel = byId("reports-panel"), newsPanel = byId("news-panel"), accountPanel = byId("account-panel");
   const editorStatus = byId("editor-status");
   let loginToken = "", turnstileId = null, reportOffset = 0, coverUrl = "", editingId = null;
   let quill;
@@ -30,11 +30,17 @@
   }
   function tab(name) {
     const reports = name === "reports";
+    const articles = name === "news";
+    const account = name === "account";
     reportsPanel.classList.toggle("rv-hidden", !reports);
-    newsPanel.classList.toggle("rv-hidden", reports);
+    newsPanel.classList.toggle("rv-hidden", !articles);
+    accountPanel.classList.toggle("rv-hidden", !account);
     byId("reports-tab").classList.toggle("secondary", !reports);
-    byId("news-tab").classList.toggle("secondary", reports);
-    if (reports) loadReports(true); else loadArticles();
+    byId("news-tab").classList.toggle("secondary", !articles);
+    byId("account-tab").classList.toggle("secondary", !account);
+    if (reports) loadReports(true);
+    if (articles) loadArticles();
+    if (account) loadAccount();
   }
   async function initTurnstile() {
     try {
@@ -174,6 +180,47 @@
     byId("news-cover-status").textContent = "";
     renderPreview();
   }
+  async function loadAccount() {
+    const status = byId("account-status");
+    try {
+      const info = await req("/api/admin/account");
+      byId("account-username").value = info.username;
+      byId("account-email").value = info.email || "";
+      feedback(status, "");
+    } catch (error) { feedback(status, error.message, true); }
+  }
+  byId("account-form").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const status = byId("account-status");
+    const newPassword = byId("account-new-password").value;
+    const confirm = byId("account-confirm-password").value;
+    if (newPassword !== confirm) {
+      feedback(status, "A confirmação da nova senha não coincide.", true);
+      return;
+    }
+    if (newPassword && newPassword.length < 12) {
+      feedback(status, "A nova senha precisa ter pelo menos 12 caracteres.", true);
+      return;
+    }
+    const button = this.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+      await req("/api/admin/account", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: byId("account-username").value.trim(),
+          email: byId("account-email").value.trim(),
+          currentPassword: byId("account-current-password").value,
+          newPassword
+        })
+      });
+      byId("account-current-password").value = "";
+      byId("account-new-password").value = "";
+      byId("account-confirm-password").value = "";
+      feedback(status, "Credenciais atualizadas. As sessões anteriores foram encerradas.");
+    } catch (error) { feedback(status, error.message, true); }
+    finally { button.disabled = false; }
+  });
   loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
     if (!loginToken) { feedback(loginStatus, "Conclua a verificação antispam.", true); return; }
@@ -197,6 +244,7 @@
   };
   byId("reports-tab").onclick = () => tab("reports");
   byId("news-tab").onclick = () => tab("news");
+  byId("account-tab").onclick = () => tab("account");
   byId("refresh-reports").onclick = () => loadReports(true);
   byId("more-reports").onclick = () => loadReports(false);
   byId("export-csv").onclick = () => exportAs("csv");
