@@ -5,7 +5,7 @@
   const loginStatus = byId("login-status"), reportsPanel = byId("reports-panel"), newsPanel = byId("news-panel"), accountPanel = byId("account-panel");
   const editorStatus = byId("editor-status");
   let reportOffset = 0, coverUrl = "", editingId = null;
-  let quill;
+  let quill, imageEditor;
   function el(tag, text, cls) {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -47,26 +47,25 @@
     dashboard.classList.remove("rv-hidden");
     if (!quill) {
       if (!window.Quill) { feedback(editorStatus, "Editor não carregado. Atualize a página.", true); return; }
+      window.RvImage.register(Quill);
       window.RvVideo.register(Quill);
       quill = new Quill("#article-editor", {
         theme: "snow", placeholder: "Escreva aqui a matéria, com títulos, links e imagens...",
         modules: { toolbar: { container: "#editor-toolbar", handlers: {
           image: function () {
+            const insertionIndex = quill.getSelection()?.index ?? Math.max(0, quill.getLength() - 1);
             const input = document.createElement("input");
             input.type = "file"; input.accept = "image/jpeg,image/png,image/webp";
             input.onchange = async () => {
               if (!input.files?.length) return;
-              try {
-                const url = await upload(input.files[0]);
-                const position = quill.getSelection(true)?.index ?? quill.getLength();
-                quill.insertEmbed(position, "image", url, "user");
-                quill.setSelection(position + 1, 0);
-              } catch (error) { feedback(editorStatus, error.message, true); }
+              if (imageEditor) await imageEditor.insert(() => upload(input.files[0]), insertionIndex);
             };
             input.click();
           }
         } } }
       });
+      imageEditor = window.RvImage.bind(quill, (message, isError = false) =>
+        feedback(editorStatus, message, isError));
       quill.on("text-change", renderPreview);
       window.RvVideo.bind(() => quill, async file => {
         const form = new FormData();
@@ -149,6 +148,7 @@
           byId("news-summary").value = item.summary;
           byId("news-published").checked = item.published;
           quill.setContents(item.body || { ops: [] });
+          imageEditor?.refresh(null);
           byId("editor-heading").textContent = "Editar notícia";
           feedback(editorStatus, "Editando uma matéria salva.");
           renderPreview();
@@ -161,6 +161,7 @@
   function clearForm() {
     editingId = null; coverUrl = ""; byId("news-form").reset();
     if (quill) quill.setText("");
+    imageEditor?.refresh(null);
     byId("editor-heading").textContent = "Nova notícia";
     feedback(editorStatus, "");
     byId("news-cover-status").textContent = "";

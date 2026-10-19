@@ -23,7 +23,25 @@
 <label>Resumo <textarea id="news-summary" required maxlength="400" style="min-height:90px"></textarea></label>
 <label>Imagem de capa <input id="news-cover" type="file" accept="image/jpeg,image/png,image/webp"></label>
 <div id="news-cover-status" class="rv-help" role="status"></div>
-<div><label>Corpo da matéria (editor visual)</label><div id="editor-toolbar"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2"></option><option value="3"></option></select></span><span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button><button type="button" class="ql-link"></button></span><span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button><button type="button" class="ql-blockquote"></button><button type="button" class="ql-image"></button></span></div><div id="article-editor" class="rv-editor"></div></div>
+<div><label>Corpo da matéria (editor visual)</label><div id="editor-toolbar"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2"></option><option value="3"></option></select></span><span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button><button type="button" class="ql-link"></button></span><span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button><button type="button" class="ql-blockquote"></button><button type="button" class="ql-image"></button></span></div><div id="article-editor" class="rv-editor"></div>
+<div id="rv-image-tools" class="rv-image-tools rv-hidden" role="toolbar" aria-label="Editar imagem selecionada">
+  <strong id="rv-image-selected">Imagem selecionada</strong>
+  <div class="rv-image-tools-row">
+    <span>Tamanho</span>
+    <button type="button" data-img-size="25%" aria-label="Imagem pequena">25%</button>
+    <button type="button" data-img-size="50%" aria-label="Imagem média">50%</button>
+    <button type="button" data-img-size="75%" aria-label="Imagem grande">75%</button>
+    <button type="button" data-img-size="100%" aria-label="Imagem largura total">100%</button>
+  </div>
+  <div class="rv-image-tools-row">
+    <span>Alinhamento</span>
+    <button type="button" data-img-align="left">Esquerda</button>
+    <button type="button" data-img-align="center">Centro</button>
+    <button type="button" data-img-align="right">Direita</button>
+    <button type="button" id="rv-image-remove" title="Retirar esta imagem do artigo">Remover</button>
+  </div>
+</div>
+<p class="rv-help">Clique no ícone de imagem para enviar e inserir uma foto onde estiver o cursor. Clique na foto inserida para ajustar tamanho e alinhamento.</p></div>
 <div class="rv-panel" style="padding:14px;background:#f8f7f4">
 <h3>Vídeos no corpo da notícia</h3>
 <label>Link de YouTube ou Vimeo<input id="video-link" type="url" placeholder="https://youtube.com/watch?v=..."></label>
@@ -53,4 +71,4 @@
 </form></section>
 </section></main>
 
-<script src="/vendor/quill.js" defer></script><script src="/editor-video.js" defer></script><script src="/admin.js" defer></script></body></html>
+<script src="/vendor/quill.js" defer></script><script src="/editor-video.js" defer></script><script src="/editor-image.js?v=20261019c" defer></script><script src="/admin.js?v=20261019c" defer></script></body></html>

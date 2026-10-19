@@ -43,6 +43,12 @@ O Cloudflare Workers limita `crypto.subtle.deriveBits(PBKDF2)` a **100.000 itera
 
 Depois de publicar a correção, executar `node scripts/repair-admin-login.mjs` no PowerShell na raiz do repositório. O script solicita a senha de forma oculta, calcula hash PBKDF2-SHA256 de 100.000 iterações com sal aleatório, atualiza somente o registro `admin_settings` no D1 remoto e apaga o arquivo SQL temporário. O nome de usuário permanece igual e as sessões anteriores são revogadas. Não copie a senha para comandos ou mensagens.
 
+## Editor visual de imagens (ClassicPress 80/20)
+
+O editor permanece no Quill 2 para evitar migrar dados já publicados. O fluxo visual se inspira nos controles de mídia do ClassicPress anexado: clique no ícone de imagem para enviar JPG/PNG/WebP até 3 MB e inserir a imagem na posição do cursor; clique na imagem para abrir uma barra contextual com tamanhos de 25%, 50%, 75% e 100%, alinhamentos à esquerda/centro/direita e opção Remover. Os atributos ficam no Delta (`width` e `imgAlign`) e são validados por allowlist no Worker, sem permitir estilos arbitrários ou URLs externas. As notícias públicas respeitam as configurações em desktop e mobile.
+
+A implementação reutiliza Quill, D1 e KV existentes; não inclui o runtime PHP, nem o TinyMCE legado do ClassicPress. Testes: `scripts/integration.test.mjs` e testes reais locais no Chrome com Playwright.
+
 ## Desenvolvimento e testes
 
 - npm install

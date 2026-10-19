@@ -129,7 +129,14 @@ function cleanDelta(value) {
       }
       ops.push(Object.keys(attrs).length ? { insert: ins, attributes: attrs } : { insert: ins });
     } else if (ins && typeof ins.image === "string" && /^\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(ins.image)) {
-      ops.push({ insert: { image: ins.image } });
+      // Image metadata is an allowlisted subset of Quill's Delta formats.
+      // Never pass through user-supplied styles or external image URLs.
+      const attrs = {};
+      if (["25%", "50%", "75%", "100%"].includes(op.attributes?.width)) attrs.width = op.attributes.width;
+      if (["left", "center", "right"].includes(op.attributes?.imgAlign)) attrs.imgAlign = op.attributes.imgAlign;
+      const image = { insert: { image: ins.image } };
+      if (Object.keys(attrs).length) image.attributes = attrs;
+      ops.push(image);
     } else if (ins && ins.rvvideo && typeof ins.rvvideo === "object") {
       const item = ins.rvvideo;
       if (item.provider === "youtube" && typeof item.id === "string" && /^[a-zA-Z0-9_-]{11}$/.test(item.id)) {
