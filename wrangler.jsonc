@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "acordarioverde",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/media/*", "/admin", "/admin/*", "/denuncia", "/denuncia/*", "/noticias", "/noticias/*"]
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "rioverde-editorial",
+    "database_id": "acc0ae26-420d-4057-9aa3-3d8356a3702d"
+  }],
+  "kv_namespaces": [{
+    "binding": "MEDIA",
+    "id": "6291f9432e64489cbf7df999a9d06181"
+  }],
+  "vars": {
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFbv5k9Y5iDHOmvO"
+  },
+  "observability": { "enabled": true }
+}

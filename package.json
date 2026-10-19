@@ -1,0 +1,13 @@
+{
+  "name": "site-vivi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test scripts/*.test.mjs",
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 execute rioverde-editorial --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute rioverde-editorial --remote --file=schema.sql"
+  },
+  "devDependencies": { "wrangler": "4.151.2" }
+}

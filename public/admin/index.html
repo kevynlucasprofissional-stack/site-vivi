@@ -1,0 +1,35 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Administração | Rio Verde Merece Saber</title><link rel="stylesheet" href="/features.css"><link rel="stylesheet" href="/vendor/quill.snow.css"></head>
+<body style="margin:0;background:#f8f7f4"><main class="rv-shell">
+<header class="rv-top"><h1>Painel administrativo</h1><a href="/">← Página inicial</a></header>
+<section id="login-panel" class="rv-panel" style="max-width:450px;margin:auto">
+<h2>Entrar como administrador</h2><form id="login-form" class="rv-form">
+<label>Usuário <input name="username" autocomplete="username" required maxlength="120"></label>
+<label>Senha <input name="password" type="password" autocomplete="current-password" required></label>
+<div id="login-challenge"></div><div id="login-status" role="status" aria-live="polite"></div>
+<button class="rv-btn" type="submit">Entrar</button></form></section>
+<section id="dashboard" class="rv-hidden">
+<div class="rv-actions rv-mb"><button id="logout" class="rv-btn secondary">Sair</button></div>
+<nav class="rv-tabs" aria-label="Funções administrativas"><button class="rv-btn" id="reports-tab" type="button">Denúncias</button><button class="rv-btn secondary" id="news-tab" type="button">Publicar notícias</button></nav>
+<div id="reports-panel" class="rv-panel">
+<h2>Denúncias recebidas</h2><p class="rv-help">Dados pessoais e relatos confidenciais. Evite compartilhar ou baixar em dispositivos públicos.</p>
+<div class="rv-actions rv-mb"><button class="rv-btn secondary" id="export-csv">Baixar CSV</button><button class="rv-btn secondary" id="export-json">Baixar JSON</button><button class="rv-btn secondary" id="refresh-reports">Atualizar</button></div>
+<div class="rv-table-scroll"><table class="rv-table"><thead><tr><th>Data</th><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Denúncia</th></tr></thead><tbody id="report-list"></tbody></table></div><p id="report-empty" class="rv-help"></p><button class="rv-btn secondary rv-hidden" id="more-reports">Carregar mais</button>
+</div>
+<div id="news-panel" class="rv-hidden">
+<div class="rv-admin-grid"><section class="rv-panel">
+<h2 id="editor-heading">Nova notícia</h2><form class="rv-form" id="news-form">
+<label>Título <input id="news-title" required maxlength="180" autocomplete="off"></label>
+<label>Endereço da matéria (slug, opcional) <input id="news-slug" maxlength="90" placeholder="gerado a partir do título"></label>
+<label>Resumo <textarea id="news-summary" required maxlength="400" style="min-height:90px"></textarea></label>
+<label>Imagem de capa <input id="news-cover" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<div id="news-cover-status" class="rv-help" role="status"></div>
+<div><label>Corpo da matéria (editor visual)</label><div id="editor-toolbar"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2"></option><option value="3"></option></select></span><span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button><button type="button" class="ql-link"></button></span><span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button><button type="button" class="ql-blockquote"></button><button type="button" class="ql-image"></button></span></div><div id="article-editor" class="rv-editor"></div></div>
+<label class="rv-check"><input type="checkbox" id="news-published"> <span>Publicar notícia imediatamente</span></label>
+<div id="editor-status" role="status" aria-live="polite"></div>
+<div class="rv-actions"><button class="rv-btn" type="submit">Salvar notícia</button><button class="rv-btn secondary" id="new-article" type="button">Limpar / nova notícia</button></div>
+</form></section>
+<section class="rv-panel"><h2>Prévia dos cards</h2><p class="rv-help">Visualização aproximada no desktop e no celular.</p><div class="rv-preview"><div><h3>Desktop</h3><div id="preview-desktop"></div></div><div><h3>Celular</h3><div class="rv-preview-phone" id="preview-mobile"></div></div></div></section></div>
+<section class="rv-panel" style="margin-top:20px"><h2>Notícias salvas</h2><div id="admin-articles"></div></section>
+</div></section></main>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="/vendor/quill.js" defer></script><script src="/admin.js" defer></script></body></html>
