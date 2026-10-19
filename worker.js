@@ -340,8 +340,10 @@ async function adminApi(request, env, path, url) {
     if (!credentials) return fail("Administração não configurada.", 503);
     if (!await limiter(env, request, "login", 7)) return fail("Muitas tentativas. Aguarde 15 minutos.", 429);
     const data = await readJson(request, 5000);
-    if (!isText(data.password, 256) || !isText(data.username, 120) ||
-        !await turnstile(env, data.turnstileToken, request)) return fail("Verificação inválida.", 403);
+    // O login administrativo usa credenciais fortes, verificação de origem e limite de
+    // tentativas. Turnstile continua obrigatório nas denúncias públicas.
+    if (!isText(data.password, 256) || !isText(data.username, 120))
+      return fail("Credenciais inválidas.", 401);
     const actual = await passwordHash(data.password, credentials.salt);
     const usernameValid = data.username === credentials.username ||
       (!!credentials.email && data.username.toLowerCase() === credentials.email.toLowerCase());

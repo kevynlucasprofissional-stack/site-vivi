@@ -60,7 +60,7 @@ test("integração: sessão, publicação, denúncia, acesso privado e CSV", asy
     assert.equal(invalid.status, 401);
 
     const login = await worker.fetch(request("/api/admin/login", "POST", {
-      username: "admin", password: "senha-forte-de-teste", turnstileToken: "test"
+      username: "admin", password: "senha-forte-de-teste"
     }), env);
     assert.equal(login.status, 200);
     const cookie = login.headers.get("Set-Cookie").split(";")[0];
@@ -171,7 +171,7 @@ test("vídeos: exige sessão, valida WebM, reproduz com Range e publica embeds s
     : realFetch(url);
   try {
     const login = await worker.fetch(request("/api/admin/login", "POST", {
-      username: "admin", password: "senha-forte-de-teste", turnstileToken: "test"
+      username: "admin", password: "senha-forte-de-teste"
     }), env);
     assert.equal(login.status, 200);
     const cookie = login.headers.get("Set-Cookie").split(";")[0];
