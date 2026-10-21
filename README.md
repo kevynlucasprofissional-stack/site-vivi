@@ -59,6 +59,44 @@ A implementação reutiliza Quill, D1 e KV existentes; não inclui o runtime PHP
 - **Excluir** remove a notícia do D1 depois de confirmação, fazendo a página pública retornar 404. Arquivos de mídia compartilháveis continuam no KV para não apagar imagens usadas em outras notícias (limpeza de arquivos órfãos fora do escopo 80/20).
 - Somente **um preview de card** no editor, responsivo.
 
+## Segurança dos testes e alertas GitGuardian
+
+O arquivo `scripts/integration.test.mjs` é uma suíte de integração **exclusivamente
+de teste**. Todas as credenciais explícitas nesse arquivo são **fixtures
+fictícias**, criadas para validar caminhos de sucesso e erro da autenticação.
+Ele executa o Worker localmente com dependências simuladas: SQLite
+`:memory:`, KV em memória e configurações `ADMIN_*` de teste.
+Os valores não são fornecidos pelo ambiente Cloudflare de produção e não
+devem ser reutilizados como senhas, hashes ou chaves reais.
+
+**Análise dos alertas GitGuardian em `scripts/integration.test.mjs`:**
+
+| Ocorrência sinalizada | Finalidade no teste | Parecer sobre esta ocorrência |
+| --- | --- | --- |
+| Senha curta de exemplo | Conferir rejeição de senha nova insuficiente (HTTP 400) | Falso positivo para vazamento real |
+| Senha incorreta de exemplo | Conferir rejeição de autenticação/credencial atual (HTTP 401/403) | Falso positivo para vazamento real |
+| Host `rioverdemerecesaber.com` | Origem de `Request` simulada, não credencial | Falso positivo para segredo |
+| Usuário genérico `admin` e número `200` | Identificador fictício e código de status HTTP | Falso positivo para segredo |
+
+Os commits [`88a3228`](https://github.com/kevynlucasprofissional-stack/site-vivi/commit/88a32289551a3a17cb436e61701abc604bca4065) e
+[`70544bb`](https://github.com/kevynlucasprofissional-stack/site-vivi/commit/70544bb0f19a17b8ce36a2a6b2da93206d7b528f)
+contêm ocorrências identificadas pelo GitGuardian nos testes. A decisão técnica
+é **classificar somente essas ocorrências específicas como falso positivo**,
+após conferir arquivo, linha e contexto de cada incidente no painel. O parecer
+documentado aqui **não altera automaticamente o status no GitGuardian**.
+
+Esta exceção **não** se aplica a valores iguais ou semelhantes encontrados em
+outros arquivos, branches, logs, variáveis reais, banco de dados ou ambiente de
+produção. Não desabilitar o GitGuardian, o detector de credenciais ou a
+varredura do repositório. Alterações futuras devem continuar sendo analisadas.
+
+**Limite da verificação:** os segredos reais de autenticação são administrados
+separadamente no Cloudflare Worker e/ou nas configurações administrativas do
+D1. Esta análise dos testes **não garante** que a produção esteja configurada
+corretamente. Verificar de forma independente a presença das variáveis
+necessárias, a robustez das credenciais e a inexistência de reutilização de
+senhas de teste, **sem imprimir ou versionar valores secretos**.
+
 ## Desenvolvimento e testes
 
 - npm install
