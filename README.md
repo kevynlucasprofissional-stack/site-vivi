@@ -82,8 +82,10 @@ Os commits [`88a3228`](https://github.com/kevynlucasprofissional-stack/site-vivi
 [`70544bb`](https://github.com/kevynlucasprofissional-stack/site-vivi/commit/70544bb0f19a17b8ce36a2a6b2da93206d7b528f)
 contêm ocorrências identificadas pelo GitGuardian nos testes. A decisão técnica
 é **classificar somente essas ocorrências específicas como falso positivo**,
-após conferir arquivo, linha e contexto de cada incidente no painel. O parecer
-documentado aqui **não altera automaticamente o status no GitGuardian**.
+após conferir arquivo, linha e contexto de cada incidente no painel. No painel GitGuardian, utilizar **Ignore** (não **Resolve**): selecionar
+**Test credential** para as senhas fictícias e **False positive (not a secret)**
+para host, nome de usuário e códigos HTTP que não constituem segredos.
+O parecer documentado aqui **não altera automaticamente o status no GitGuardian**.
 
 Esta exceção **não** se aplica a valores iguais ou semelhantes encontrados em
 outros arquivos, branches, logs, variáveis reais, banco de dados ou ambiente de
