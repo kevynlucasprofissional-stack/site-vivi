@@ -1,3 +1,26 @@
+/**
+ * SEGURANÇA — CREDENCIAIS FICTÍCIAS DE TESTE (contexto GitGuardian)
+ *
+ * Este arquivo utiliza SOMENTE credenciais de teste, deliberadamente válidas
+ * ou inválidas. envForTest() cria um banco SQLite em memória, simula o KV e
+ * configura os valores ADMIN_* exclusivamente para a execução local dos testes.
+ * Nenhuma senha, hash ou chave de sessão deste arquivo deve ser utilizada em
+ * produção; os testes NÃO leem os secrets do Worker implantado na Cloudflare.
+ *
+ * As senhas fracas/incorretas exercitam validações (HTTP 400/401/403);
+ * as senhas fortes fictícias exercitam login e troca de credenciais (HTTP 200).
+ * O host do site é apenas a origem das Requests simuladas; números como 200
+ * também aparecem como códigos de status HTTP, não como portas de um serviço.
+ *
+ * Ocorrências GitGuardian exclusivamente nestes dados de teste, incluindo
+ * as introduzidas nos commits 88a3228 e 70544bb, são falsos positivos de
+ * credenciais reais (test fixtures). Classifique apenas essas ocorrências,
+ * sem suprimir a varredura geral nem ignorar qualquer outro alerta.
+ *
+ * Esta classificação NÃO comprova a configuração de produção. Credenciais
+ * reais são gerenciadas separadamente no Cloudflare Worker / D1 e devem ser
+ * verificadas independentemente, sem revelar os valores no repositório.
+ */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
